@@ -17,6 +17,7 @@ with the following keys:
 
 import random, time, pygame, sys, copy
 from pygame.locals import *
+import solver
 
 FPS = 30 # frames per second to update the screen
 WINDOWWIDTH = 600  # width of the program's window, in pixels
@@ -28,8 +29,8 @@ GEMIMAGESIZE = 64 # width & height of each space in pixels
 
 # NUMGEMIMAGES is the number of gem types. You will need .png image
 # files named gem0.png, gem1.png, etc. up to gem(N-1).png.
-NUMGEMIMAGES = 5
-assert NUMGEMIMAGES >= 5 # game needs at least 5 types of gems to work
+NUMGEMIMAGES = 4
+assert NUMGEMIMAGES >= 4 # game needs at least 5 types of gems to work
 
 # NUMMATCHSOUNDS is the number of different sounds to choose from when
 # a match is made. The .wav files are named match0.wav, match1.wav, etc.
@@ -114,16 +115,16 @@ def runGame():
     gameBoard = getBlankBoard()
     score = 0
     fillBoardAndAnimate(gameBoard, [], score) # Drop the initial gems.
-
     # initialize variables for the start of a new game
     firstSelectedGem = None
     lastMouseDownX = None
     lastMouseDownY = None
     gameIsOver = False
-    lastScoreDeduction = time.time()
+    lastScoreDeduction = 0 #time.time()
     clickContinueTextSurf = None
 
     while True: # main game loop
+
         clickedSpace = None
         for event in pygame.event.get(): # event handling loop
             if event.type == QUIT or (event.type == KEYUP and event.key == K_ESCAPE):
@@ -154,7 +155,10 @@ def runGame():
         if clickedSpace and not firstSelectedGem:
             # This was the first gem clicked on.
             firstSelectedGem = clickedSpace
+
         elif clickedSpace and firstSelectedGem:
+        #if True:
+            #firstSelectedGem, clickedSpace = solver.getSwap(gameBoard)
             # Two gems have been clicked on and selected. Swap the gems.
             firstSwappingGem, secondSwappingGem = getSwappingGems(gameBoard, firstSelectedGem, clickedSpace)
             if firstSwappingGem == None and secondSwappingGem == None:
@@ -172,7 +176,7 @@ def runGame():
 
             # See if this is a matching move.
             matchedGems = findMatchingGems(gameBoard)
-            if matchedGems == []:
+            if not matchedGems:
                 # Was not a matching move; swap the gems back
                 # GAMESOUNDS['bad swap'].play()
                 animateMovingGems(boardCopy, [firstSwappingGem, secondSwappingGem], [], score)
@@ -180,22 +184,24 @@ def runGame():
                 gameBoard[secondSwappingGem['x']][secondSwappingGem['y']] = secondSwappingGem['imageNum']
             else:
                 # This was a matching move.
-                scoreAdd = 0
-                while matchedGems != []:
+                while matchedGems:
                     # Remove matched gems, then pull down the board.
 
                     # points is a list of dicts that tells fillBoardAndAnimate()
                     # where on the screen to display text to show how many
                     # points the player got. points is a list because if
                     # the playergets multiple matches, then multiple points text should appear.
+                    scoreAdd = len(matchedGems)
+                    refGem = list(matchedGems)[0]
                     points = []
-                    for gemSet in matchedGems:
-                        scoreAdd += (10 + (len(gemSet) - 3) * 10)
-                        for gem in gemSet:
-                            gameBoard[gem[0]][gem[1]] = EMPTY_SPACE
-                        points.append({'points': scoreAdd,
-                                       'x': gem[0] * GEMIMAGESIZE + XMARGIN,
-                                       'y': gem[1] * GEMIMAGESIZE + YMARGIN})
+                    points.append({'points': scoreAdd,
+                                   'x': refGem[0] * GEMIMAGESIZE + XMARGIN,
+                                   'y': refGem[1] * GEMIMAGESIZE + YMARGIN})
+                    for gem in matchedGems:
+                        #scoreAdd += (10 + (len(gemSet) - 3) * 10)
+                        #for gem in gemSet:
+                        gameBoard[gem[0]][gem[1]] = EMPTY_SPACE
+
                     # Dont play sounds
                     #random.choice(GAMESOUNDS['match']).play()
                     score += scoreAdd
@@ -204,6 +210,7 @@ def runGame():
                     fillBoardAndAnimate(gameBoard, points, score)
 
                     # Check if there are any new matches.
+                    # import pdb; pdb.set_trace()
                     matchedGems = findMatchingGems(gameBoard)
             firstSelectedGem = None
 
@@ -223,10 +230,10 @@ def runGame():
                 clickContinueTextRect = clickContinueTextSurf.get_rect()
                 clickContinueTextRect.center = int(WINDOWWIDTH / 2), int(WINDOWHEIGHT / 2)
             DISPLAYSURF.blit(clickContinueTextSurf, clickContinueTextRect)
-        elif score > 0 and time.time() - lastScoreDeduction > DEDUCTSPEED:
-            # score drops over time
-            score -= 1
-            lastScoreDeduction = time.time()
+        # elif score > 0 and time.time() - lastScoreDeduction > DEDUCTSPEED:
+        #     # score drops over time
+        #     score -= 1
+        #     lastScoreDeduction = time.time()
         drawScore(score)
         pygame.display.update()
         FPSCLOCK.tick(FPS)
@@ -392,35 +399,41 @@ def getDropSlots(board):
 
 
 def findMatchingGems(board):
-    gemsToRemove = [] # a list of lists of gems in matching triplets that should be removed
+    gemsToRemove = set() # a list of lists of gems in matching triplets that
+    # should be removed
     boardCopy = copy.deepcopy(board)
 
     # loop through each space, checking for 3 adjacent identical gems
     for x in range(BOARDWIDTH):
         for y in range(BOARDHEIGHT):
+
+            # me = getGemAt(boardCopy, x, y)
+            # u1 = getGemAt(boardCopy, x, y - 1)
+            # u2 = getGemAt(boardCopy, x, y - 2)
+            # d1 = getGemAt(boardCopy, x, y + 1)
+            # d2 = getGemAt(boardCopy, x, y + 2)
+            # r1 = getGemAt(boardCopy, x + 1, y)
+            # r2 = getGemAt(boardCopy, x + 2, y)
+            # l1 = getGemAt(boardCopy, x - 1, y)
+            # l2 = getGemAt(boardCopy, x - 2, y)
+
             # look for horizontal matches
             if getGemAt(boardCopy, x, y) == getGemAt(boardCopy, x + 1, y) == getGemAt(boardCopy, x + 2, y) and getGemAt(boardCopy, x, y) != EMPTY_SPACE:
                 targetGem = boardCopy[x][y]
                 offset = 0
-                removeSet = []
                 while getGemAt(boardCopy, x + offset, y) == targetGem:
                     # keep checking if there's more than 3 gems in a row
-                    removeSet.append((x + offset, y))
-                    boardCopy[x + offset][y] = EMPTY_SPACE
+                    gemsToRemove.add((x + offset, y))
                     offset += 1
-                gemsToRemove.append(removeSet)
 
             # look for vertical matches
             if getGemAt(boardCopy, x, y) == getGemAt(boardCopy, x, y + 1) == getGemAt(boardCopy, x, y + 2) and getGemAt(boardCopy, x, y) != EMPTY_SPACE:
                 targetGem = boardCopy[x][y]
                 offset = 0
-                removeSet = []
                 while getGemAt(boardCopy, x, y + offset) == targetGem:
                     # keep checking, in case there's more than 3 gems in a row
-                    removeSet.append((x, y + offset))
-                    boardCopy[x][y + offset] = EMPTY_SPACE
+                    gemsToRemove.add((x, y + offset))
                     offset += 1
-                gemsToRemove.append(removeSet)
 
     return gemsToRemove
 
