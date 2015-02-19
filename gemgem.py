@@ -17,7 +17,8 @@ with the following keys:
 
 import random, time, pygame, sys, copy
 from pygame.locals import *
-import solver
+from optparse import OptionParser
+from solver import Solver
 
 FPS = 30 # frames per second to update the screen
 WINDOWWIDTH = 600  # width of the program's window, in pixels
@@ -67,7 +68,7 @@ RIGHT = 'right'
 EMPTY_SPACE = -1 # an arbitrary, nonpositive value
 ROWABOVEBOARD = 'row above board' # an arbitrary, noninteger value
 
-def main():
+def main(is_manual=False):
     global FPSCLOCK, DISPLAYSURF, GEMIMAGES, GAMESOUNDS, BASICFONT, BOARDRECTS
 
     # Initial set up.
@@ -104,11 +105,12 @@ def main():
                              GEMIMAGESIZE))
             BOARDRECTS[x].append(r)
 
+    game_solver = Solver()
     while True:
-        runGame()
+        runGame(is_manual, game_solver)
 
 
-def runGame():
+def runGame(is_manual = False, game_solver = None):
     # Plays through a single game. When the game is over, this function returns.
 
     # initalize the board
@@ -125,40 +127,49 @@ def runGame():
 
     while True: # main game loop
 
-        clickedSpace = None
-        for event in pygame.event.get(): # event handling loop
-            if event.type == QUIT or (event.type == KEYUP and event.key == K_ESCAPE):
-                pygame.quit()
-                sys.exit()
-            elif event.type == KEYUP and event.key == K_BACKSPACE:
-                return # start a new game
+        do_move = True
 
-            elif event.type == MOUSEBUTTONUP:
-                if gameIsOver:
-                    return # after games ends, click to start a new game
+        if not is_manual:
+            firstSelectedGem, clickedSpace = game_solver.getSwap(gameBoard)
+            for event in pygame.event.get():
+                if event.type == QUIT or (event.type == KEYUP and event.key == K_ESCAPE):
+                    pygame.quit()
+                    sys.exit()
 
-                if event.pos == (lastMouseDownX, lastMouseDownY):
-                    # This event is a mouse click, not the end of a mouse drag.
-                    clickedSpace = checkForGemClick(event.pos)
-                else:
-                    # this is the end of a mouse drag
-                    firstSelectedGem = checkForGemClick((lastMouseDownX, lastMouseDownY))
-                    clickedSpace = checkForGemClick(event.pos)
-                    if not firstSelectedGem or not clickedSpace:
-                        # if not part of a valid drag, deselect both
-                        firstSelectedGem = None
-                        clickedSpace = None
-            elif event.type == MOUSEBUTTONDOWN:
-                # this is the start of a mouse click or mouse drag
-                lastMouseDownX, lastMouseDownY = event.pos
+        else:
+            clickedSpace = None
+            for event in pygame.event.get(): # event handling loop
+                if event.type == QUIT or (event.type == KEYUP and event.key == K_ESCAPE):
+                    pygame.quit()
+                    sys.exit()
+                elif event.type == KEYUP and event.key == K_BACKSPACE:
+                    return # start a new game
 
-        if clickedSpace and not firstSelectedGem:
-            # This was the first gem clicked on.
-            firstSelectedGem = clickedSpace
+                elif event.type == MOUSEBUTTONUP:
+                    if gameIsOver:
+                        return # after games ends, click to start a new game
 
-        elif clickedSpace and firstSelectedGem:
-        #if True:
-            #firstSelectedGem, clickedSpace = solver.getSwap(gameBoard)
+                    if event.pos == (lastMouseDownX, lastMouseDownY):
+                        # This event is a mouse click, not the end of a mouse drag.
+                        clickedSpace = checkForGemClick(event.pos)
+                    else:
+                        # this is the end of a mouse drag
+                        firstSelectedGem = checkForGemClick((lastMouseDownX, lastMouseDownY))
+                        clickedSpace = checkForGemClick(event.pos)
+                        if not firstSelectedGem or not clickedSpace:
+                            # if not part of a valid drag, deselect both
+                            firstSelectedGem = None
+                            clickedSpace = None
+                elif event.type == MOUSEBUTTONDOWN:
+                    # this is the start of a mouse click or mouse drag
+                    lastMouseDownX, lastMouseDownY = event.pos
+
+            if clickedSpace and not firstSelectedGem:
+                # This was the first gem clicked on.
+                firstSelectedGem = clickedSpace
+                do_move = False
+
+        if clickedSpace and firstSelectedGem and do_move:
             # Two gems have been clicked on and selected. Swap the gems.
             firstSwappingGem, secondSwappingGem = getSwappingGems(gameBoard, firstSelectedGem, clickedSpace)
             if firstSwappingGem == None and secondSwappingGem == None:
@@ -212,6 +223,8 @@ def runGame():
                     # Check if there are any new matches.
                     # import pdb; pdb.set_trace()
                     matchedGems = findMatchingGems(gameBoard)
+
+
             firstSelectedGem = None
 
             if not canMakeMove(gameBoard):
@@ -230,10 +243,7 @@ def runGame():
                 clickContinueTextRect = clickContinueTextSurf.get_rect()
                 clickContinueTextRect.center = int(WINDOWWIDTH / 2), int(WINDOWHEIGHT / 2)
             DISPLAYSURF.blit(clickContinueTextSurf, clickContinueTextRect)
-        # elif score > 0 and time.time() - lastScoreDeduction > DEDUCTSPEED:
-        #     # score drops over time
-        #     score -= 1
-        #     lastScoreDeduction = time.time()
+
         drawScore(score)
         pygame.display.update()
         FPSCLOCK.tick(FPS)
@@ -560,4 +570,10 @@ def drawScore(score):
 
 
 if __name__ == '__main__':
-    main()
+    parser = OptionParser()
+    parser.add_option("-m", "--manual",
+                      action="store_true", dest="IS_MANUAL", default=False,
+                      help="Run game with manual control")
+
+    (options, args) = parser.parse_args()
+    main(options.IS_MANUAL)
