@@ -18,9 +18,8 @@ with the following keys:
 import random, time, pygame, sys, copy
 from pygame.locals import *
 from optparse import OptionParser
-from solver import Solver
 
-FPS = 30 # frames per second to update the screen
+FPS = 100000 # frames per second to update the screen
 WINDOWWIDTH = 600  # width of the program's window, in pixels
 WINDOWHEIGHT = 600 # height in pixels
 
@@ -68,7 +67,52 @@ RIGHT = 'right'
 EMPTY_SPACE = -1 # an arbitrary, nonpositive value
 ROWABOVEBOARD = 'row above board' # an arbitrary, noninteger value
 
+class Solver(object):
+
+    def __init__(self):
+        pass
+
+    def getSwap(self, board):
+        moves = []
+        for x in range(BOARDWIDTH):
+            for y in range(BOARDHEIGHT):
+                boardCopy = copy.deepcopy(board)
+                gem = getGemAt(boardCopy, x, y)
+                gem_right = getGemAt(boardCopy, x + 1, y)
+                gem_down = getGemAt(boardCopy, x, y + 1)
+
+                if gem_right is not None:
+                    first = {'y':y, 'x':x, 'imageNum': gem, 'direction':RIGHT}
+                    second = {'y':y, 'x':x + 1, 'imageNum': gem_right, 'direction':LEFT}
+                    score = perform_move(boardCopy, first, second)
+                    if score > 0:
+                        moves.append((score, first, second))
+
+                if gem_down is not None:
+                    first = {'y':y, 'x':x, 'imageNum': gem, 'direction':DOWN}
+                    second = {'y':y + 1, 'x':x, 'imageNum': gem_down, 'direction':UP}
+                    score = perform_move(boardCopy, first, second)
+                    if score > 0:
+                        moves.append((score, first, second))
+
+        best = max(moves[::-1])
+
+        print
+        print "MOVES:"
+        for move in moves:
+            print move
+
+        print
+        print "BEST:"
+        print best
+
+
+        import pdb; pdb.set_trace()
+
+        return best[1], best[2]
+
 def main(is_manual=False):
+
     global FPSCLOCK, DISPLAYSURF, GEMIMAGES, GAMESOUNDS, BASICFONT, BOARDRECTS
 
     # Initial set up.
@@ -116,13 +160,12 @@ def runGame(is_manual = False, game_solver = None):
     # initalize the board
     gameBoard = getBlankBoard()
     score = 0
-    fillBoardAndAnimate(gameBoard, [], score) # Drop the initial gems.
+    fillBoardAndAnimate(gameBoard, [], score, animate = True) # Drop the initial gems.
     # initialize variables for the start of a new game
     firstSelectedGem = None
     lastMouseDownX = None
     lastMouseDownY = None
     gameIsOver = False
-    lastScoreDeduction = 0 #time.time()
     clickContinueTextSurf = None
 
     while True: # main game loop
@@ -130,7 +173,7 @@ def runGame(is_manual = False, game_solver = None):
         do_move = True
 
         if not is_manual:
-            firstSelectedGem, clickedSpace = game_solver.getSwap(gameBoard)
+            firstSelectedGem, clickedSpace = game_solver.getSwap(copy.deepcopy(gameBoard))
             for event in pygame.event.get():
                 if event.type == QUIT or (event.type == KEYUP and event.key == K_ESCAPE):
                     pygame.quit()
@@ -177,58 +220,12 @@ def runGame(is_manual = False, game_solver = None):
                 firstSelectedGem = None # deselect the first gem
                 continue
 
-            # Show the swap animation on the screen.
-            boardCopy = getBoardCopyMinusGems(gameBoard, (firstSwappingGem, secondSwappingGem))
-            animateMovingGems(boardCopy, [firstSwappingGem, secondSwappingGem], [], score)
-
-            # Swap the gems in the board data structure.
-            gameBoard[firstSwappingGem['x']][firstSwappingGem['y']] = secondSwappingGem['imageNum']
-            gameBoard[secondSwappingGem['x']][secondSwappingGem['y']] = firstSwappingGem['imageNum']
-
-            # See if this is a matching move.
-            matchedGems = findMatchingGems(gameBoard)
-            if not matchedGems:
-                # Was not a matching move; swap the gems back
-                # GAMESOUNDS['bad swap'].play()
-                animateMovingGems(boardCopy, [firstSwappingGem, secondSwappingGem], [], score)
-                gameBoard[firstSwappingGem['x']][firstSwappingGem['y']] = firstSwappingGem['imageNum']
-                gameBoard[secondSwappingGem['x']][secondSwappingGem['y']] = secondSwappingGem['imageNum']
-            else:
-                # This was a matching move.
-                while matchedGems:
-                    # Remove matched gems, then pull down the board.
-
-                    # points is a list of dicts that tells fillBoardAndAnimate()
-                    # where on the screen to display text to show how many
-                    # points the player got. points is a list because if
-                    # the playergets multiple matches, then multiple points text should appear.
-                    scoreAdd = len(matchedGems)
-                    refGem = list(matchedGems)[0]
-                    points = []
-                    points.append({'points': scoreAdd,
-                                   'x': refGem[0] * GEMIMAGESIZE + XMARGIN,
-                                   'y': refGem[1] * GEMIMAGESIZE + YMARGIN})
-                    for gem in matchedGems:
-                        #scoreAdd += (10 + (len(gemSet) - 3) * 10)
-                        #for gem in gemSet:
-                        gameBoard[gem[0]][gem[1]] = EMPTY_SPACE
-
-                    # Dont play sounds
-                    #random.choice(GAMESOUNDS['match']).play()
-                    score += scoreAdd
-
-                    # Drop the new gems.
-                    fillBoardAndAnimate(gameBoard, points, score)
-
-                    # Check if there are any new matches.
-                    # import pdb; pdb.set_trace()
-                    matchedGems = findMatchingGems(gameBoard)
-
+            score = perform_move(gameBoard, firstSwappingGem, secondSwappingGem, 0, animate = True)
 
             firstSelectedGem = None
 
-            if not canMakeMove(gameBoard):
-                gameIsOver = True
+        if not canMakeMove(gameBoard):
+            gameIsOver = True
 
         # Draw the board.
         DISPLAYSURF.fill(BGCOLOR)
@@ -248,6 +245,60 @@ def runGame(is_manual = False, game_solver = None):
         pygame.display.update()
         FPSCLOCK.tick(FPS)
 
+def perform_move(gameBoard, firstSwappingGem, secondSwappingGem, score=0, animate = False):
+    # Show the swap animation on the screen.
+
+    boardCopy = getBoardCopyMinusGems(gameBoard, (firstSwappingGem, secondSwappingGem))
+
+    if animate:
+        animateMovingGems(boardCopy, [firstSwappingGem, secondSwappingGem], [], score)
+
+    # Swap the gems in the board data structure.
+    gameBoard[firstSwappingGem['x']][firstSwappingGem['y']] = secondSwappingGem['imageNum']
+    gameBoard[secondSwappingGem['x']][secondSwappingGem['y']] = firstSwappingGem['imageNum']
+
+    # See if this is a matching move.
+    matchedGems = findMatchingGems(gameBoard)
+    if not matchedGems:
+        # Was not a matching move; swap the gems back
+        # GAMESOUNDS['bad swap'].play()
+        if animate:
+            animateMovingGems(boardCopy, [firstSwappingGem, secondSwappingGem], [], score)
+
+        gameBoard[firstSwappingGem['x']][firstSwappingGem['y']] = firstSwappingGem['imageNum']
+        gameBoard[secondSwappingGem['x']][secondSwappingGem['y']] = secondSwappingGem['imageNum']
+    else:
+        # This was a matching move.
+        while matchedGems:
+            # Remove matched gems, then pull down the board.
+
+            # points is a list of dicts that tells fillBoardAndAnimate()
+            # where on the screen to display text to show how many
+            # points the player got. points is a list because if
+            # the playergets multiple matches, then multiple points text should appear.
+            scoreAdd = len(matchedGems)
+            refGem = list(matchedGems)[0]
+            points = []
+            points.append({'points': scoreAdd,
+                           'x': refGem[0] * GEMIMAGESIZE + XMARGIN,
+                           'y': refGem[1] * GEMIMAGESIZE + YMARGIN})
+            for gem in matchedGems:
+                #scoreAdd += (10 + (len(gemSet) - 3) * 10)
+                #for gem in gemSet:
+                gameBoard[gem[0]][gem[1]] = EMPTY_SPACE
+
+            # Dont play sounds
+            #random.choice(GAMESOUNDS['match']).play()
+            score += scoreAdd
+
+            # Drop the new gems.
+            fillBoardAndAnimate(gameBoard, points, score, animate)
+
+            # Check if there are any new matches.
+            # import pdb; pdb.set_trace()
+            matchedGems = findMatchingGems(gameBoard)
+
+    return score
 
 def getSwappingGems(board, firstXY, secondXY):
     # If the gems at the (X, Y) coordinates of the two gems are adjacent,
@@ -337,6 +388,7 @@ def drawMovingGem(gem, progress):
     # Draw a gem sliding in the direction that its 'direction' key
     # indicates. The progress parameter is a number from 0 (just
     # starting) to 100 (slide complete).
+
     movex = 0
     movey = 0
     progress *= 0.01
@@ -378,7 +430,7 @@ def getGemAt(board, x, y):
         return board[x][y]
 
 
-def getDropSlots(board):
+def getDropSlots(board, simulation = False):
     # Creates a "drop slot" for each column and fills the slot with a
     # number of gems that that column is lacking. This function assumes
     # that the gems have been gravity dropped already.
@@ -388,6 +440,9 @@ def getDropSlots(board):
     dropSlots = []
     for i in range(BOARDWIDTH):
         dropSlots.append([])
+
+    if simulation:
+        return dropSlots
 
     # count the number of empty spaces in each column on the board
     for x in range(BOARDWIDTH):
@@ -416,16 +471,6 @@ def findMatchingGems(board):
     # loop through each space, checking for 3 adjacent identical gems
     for x in range(BOARDWIDTH):
         for y in range(BOARDHEIGHT):
-
-            # me = getGemAt(boardCopy, x, y)
-            # u1 = getGemAt(boardCopy, x, y - 1)
-            # u2 = getGemAt(boardCopy, x, y - 2)
-            # d1 = getGemAt(boardCopy, x, y + 1)
-            # d2 = getGemAt(boardCopy, x, y + 2)
-            # r1 = getGemAt(boardCopy, x + 1, y)
-            # r2 = getGemAt(boardCopy, x + 2, y)
-            # l1 = getGemAt(boardCopy, x - 1, y)
-            # l2 = getGemAt(boardCopy, x - 2, y)
 
             # look for horizontal matches
             if getGemAt(boardCopy, x, y) == getGemAt(boardCopy, x + 1, y) == getGemAt(boardCopy, x + 2, y) and getGemAt(boardCopy, x, y) != EMPTY_SPACE:
@@ -506,8 +551,11 @@ def moveGems(board, movingGems):
             board[gem['x']][0] = gem['imageNum'] # move to top row
 
 
-def fillBoardAndAnimate(board, points, score):
-    dropSlots = getDropSlots(board)
+def fillBoardAndAnimate(board, points, score, animate = False):
+    simulation = False
+    if animate == False:
+        simulation = True
+    dropSlots = getDropSlots(board, simulation)
     while dropSlots != [[]] * BOARDWIDTH:
         # do the dropping animation as long as there are more gems to drop
         movingGems = getDroppingGems(board)
@@ -517,7 +565,9 @@ def fillBoardAndAnimate(board, points, score):
                 movingGems.append({'imageNum': dropSlots[x][0], 'x': x, 'y': ROWABOVEBOARD, 'direction': DOWN})
 
         boardCopy = getBoardCopyMinusGems(board, movingGems)
-        animateMovingGems(boardCopy, movingGems, points, score)
+        if animate:
+            animateMovingGems(boardCopy, movingGems, points, score)
+
         moveGems(board, movingGems)
 
         # Make the next row of gems from the drop slots
