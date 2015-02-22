@@ -29,7 +29,7 @@ GEMIMAGESIZE = 64 # width & height of each space in pixels
 
 # NUMGEMIMAGES is the number of gem types. You will need .png image
 # files named gem0.png, gem1.png, etc. up to gem(N-1).png.
-NUMGEMIMAGES = 6
+NUMGEMIMAGES = 4
 assert NUMGEMIMAGES >= 4 # game needs at least 5 types of gems to work
 
 # NUMMATCHSOUNDS is the number of different sounds to choose from when
@@ -69,13 +69,8 @@ ROWABOVEBOARD = 'row above board' # an arbitrary, noninteger value
 
 GREEDY = 'greedy'
 ASTAR = 'a*'
+GOAL_SCORE = 100
 
-class FringeState(object):
-    """ Every item in the fringe is a pair of position & path """
-    def __init__(self, board, swaps=[], swap_num=0):
-        self.board = board
-        self.swaps = swaps[:]
-        self.swap_num = swap_num
 
 class BoardMove(object):
 
@@ -104,6 +99,10 @@ class BoardMove(object):
         self.dest_board, self.score = perform_move(copy.deepcopy(self.source_board), self.first, self.second,
                                                    score=0, simulation=True, random_fall=self.random_fall)
 
+    def __str__(self):
+        return "MOVE: (x, y): (%d, %d); Direction %s; Score: %d" %(self.first['x'], self.first['y'],
+                                                                   self.first['direction'], self.score)
+
     def __cmp__(self, other):
         if self.score < other.score:
             return -1
@@ -111,6 +110,12 @@ class BoardMove(object):
             return 1
         return 0
 
+class FringeState(object):
+    def __init__(self, board, moves=[], total_move_num=0, total_score=0):
+        self.board = board
+        self.moves = moves[:]
+        self.total_move_num = total_move_num
+        self.total_score = total_score
 
 class Solver(object):
 
@@ -119,33 +124,40 @@ class Solver(object):
         self.type = solver_type
         self.uncertainty_thres = 0.5
 
-    def getSwaps(self, board):
+    def getSwaps(self, board, cur_score=0):
         if self.type == GREEDY:
             return [self.getSwapGreedy(board)]
         elif self.type == ASTAR:
-            return self.getSwapsAstar(board)
+            return self.getSwapsAstar(board, cur_score)
 
-    def getSwapsUsingSearch(self, start_board, fringe):
+    def getSwapsUsingSearch(self, start_board, fringe, cur_score):
         visited = []
-        fringe.push(FringeState(start_board))
+        fringe.append(FringeState(start_board, total_score=cur_score))
         while not self.isCutoff(fringe):
+            print len(fringe)
             cur = fringe.pop()
             if self.isGoal(cur):
-                return cur.swaps
+                return cur.moves
 
-            if cur.state in visited:
+            if cur.board in visited:
                 continue
 
-            for successor in self.getPossibleMoves(cur.board):
-                pass
+            for succ in self.getPossibleMoves(cur.board):
+                fringe.append(FringeState(succ.dest_board, cur.moves + [succ], 'CHANGETHIS',
+                                          cur.total_score + succ.score))
+        best = max(fringe, key=lambda fs: sum([m.score for m in fs.moves]))
+        return best.moves
 
-    def getSwapsAstar(self, board):
+    def isGoal(self, fringe_state):
+        return fringe_state.total_score > GOAL_SCORE
+
+    def getSwapsAstar(self, board, cur_score):
         fringe = []
-        return self.getSwapsUsingSearch(board, fringe)
+        return self.getSwapsUsingSearch(board, fringe, cur_score)
 
-    def isCutoff(self, board_list):
-        for b in board_list:
-            if not self.isUncertain(b):
+    def isCutoff(self, states):
+        for state in states:
+            if not self.isUncertain(state.board):
                 return False
         return True
 
@@ -175,14 +187,15 @@ class Solver(object):
 
         if moves:
             best = max(moves)
-            # print
-            # print "MOVES:"
-            # for move in moves:
-            #     print move
-            # print
-            # print "BEST:"
-            # print best
-            #import pdb; pdb.set_trace()
+            print
+            print "MOVES:"
+            for move in moves:
+                print move
+            print
+            print "BEST:"
+            print best
+            print
+            import pdb; pdb.set_trace()
             return best.first, best.second, best.score
         else:
             return None, None, None
@@ -225,7 +238,7 @@ def main(is_manual=False, random_fall=False):
                              GEMIMAGESIZE))
             BOARDRECTS[x].append(r)
 
-    game_solver = Solver(random_fall, GREEDY)
+    game_solver = Solver(random_fall, ASTAR)
     while True:
         runGame(is_manual, game_solver)
 
@@ -252,7 +265,10 @@ def runGame(is_manual=False, game_solver=None):
 
         if not is_manual and not gameIsOver:
             if not swap_list:
-                swap_list = game_solver.getSwaps(copy.deepcopy(gameBoard))
+                swap_list = game_solver.getSwaps(copy.deepcopy(gameBoard), score)
+                print "Retrieving new swap list:"
+                print swap_list
+                print
 
             firstSelectedGem, clickedSpace, predictedScore = swap_list.pop(0)
 
@@ -650,7 +666,7 @@ def moveGems(board, movingGems):
 
 def fillBoardAndAnimate(board, points, score, simulation=True, random_fall=False):
 
-    if simulation and random_fall:
+    if simulation and not random_fall:
         pullDownAllGems(board)
         return
 
@@ -742,6 +758,9 @@ if __name__ == '__main__':
     parser.add_option("-r", "--random-fall",
                       action="store_true", dest="RANDOM_FALL", default=False,
                       help="Simulate cascade with using simulation of random gems falling from top")
+    parser.add_option("-c", "--score",
+                  type="int", dest="GOAL_SCORE", default=100,
+                  help="Goal score")
 
     (options, args) = parser.parse_args()
 
