@@ -29,7 +29,7 @@ GEMIMAGESIZE = 64 # width & height of each space in pixels
 
 # NUMGEMIMAGES is the number of gem types. You will need .png image
 # files named gem0.png, gem1.png, etc. up to gem(N-1).png.
-NUMGEMIMAGES = 4
+NUMGEMIMAGES = 6
 assert NUMGEMIMAGES >= 4 # game needs at least 5 types of gems to work
 
 # NUMMATCHSOUNDS is the number of different sounds to choose from when
@@ -69,49 +69,55 @@ ROWABOVEBOARD = 'row above board' # an arbitrary, noninteger value
 
 class Solver(object):
 
-    def __init__(self):
-        pass
+    def __init__(self, random_fall):
+        self.random_fall = random_fall
 
     def getSwap(self, board):
+        printBoard(board)
         moves = []
-        for x in range(BOARDWIDTH):
-            for y in range(BOARDHEIGHT):
-                boardCopy = copy.deepcopy(board)
-                gem = getGemAt(boardCopy, x, y)
-                gem_right = getGemAt(boardCopy, x + 1, y)
-                gem_down = getGemAt(boardCopy, x, y + 1)
+        for y in range(BOARDHEIGHT):
+            for x in range(BOARDWIDTH):
+                gem = getGemAt(board, x, y)
+                gem_right = getGemAt(board, x + 1, y)
+                gem_down = getGemAt(board, x, y + 1)
 
                 if gem_right is not None:
                     first = {'y':y, 'x':x, 'imageNum': gem, 'direction':RIGHT}
                     second = {'y':y, 'x':x + 1, 'imageNum': gem_right, 'direction':LEFT}
-                    score = perform_move(boardCopy, first, second)
+                    score = perform_move(copy.deepcopy(board), first, second,
+                                         score=0, simulation=True, random_fall=self.random_fall)
                     if score > 0:
                         moves.append((score, first, second))
 
                 if gem_down is not None:
                     first = {'y':y, 'x':x, 'imageNum': gem, 'direction':DOWN}
                     second = {'y':y + 1, 'x':x, 'imageNum': gem_down, 'direction':UP}
-                    score = perform_move(boardCopy, first, second)
+                    score = perform_move(copy.deepcopy(board), first, second,
+                                         score=0,  simulation=True, random_fall=self.random_fall)
                     if score > 0:
                         moves.append((score, first, second))
 
-        best = max(moves[::-1])
+        if moves:
+            best = max(moves)
 
-        print
-        print "MOVES:"
-        for move in moves:
-            print move
+            print
+            print "MOVES:"
+            for move in moves:
+                print move
 
-        print
-        print "BEST:"
-        print best
+            print
+            print "BEST:"
+            print best
 
 
-        import pdb; pdb.set_trace()
+            #import pdb; pdb.set_trace()
 
-        return best[1], best[2]
+            return best[1], best[2], best[0]
 
-def main(is_manual=False):
+        else:
+            return None, None, None
+
+def main(is_manual=False, random_fall=False):
 
     global FPSCLOCK, DISPLAYSURF, GEMIMAGES, GAMESOUNDS, BASICFONT, BOARDRECTS
 
@@ -149,18 +155,18 @@ def main(is_manual=False):
                              GEMIMAGESIZE))
             BOARDRECTS[x].append(r)
 
-    game_solver = Solver()
+    game_solver = Solver(random_fall)
     while True:
         runGame(is_manual, game_solver)
 
 
-def runGame(is_manual = False, game_solver = None):
+def runGame(is_manual=False, game_solver=None):
     # Plays through a single game. When the game is over, this function returns.
 
     # initalize the board
     gameBoard = getBlankBoard()
     score = 0
-    fillBoardAndAnimate(gameBoard, [], score, animate = True) # Drop the initial gems.
+    fillBoardAndAnimate(gameBoard, [], score, simulation=False, random_fall=True) # Drop the initial gems.
     # initialize variables for the start of a new game
     firstSelectedGem = None
     lastMouseDownX = None
@@ -172,8 +178,8 @@ def runGame(is_manual = False, game_solver = None):
 
         do_move = True
 
-        if not is_manual:
-            firstSelectedGem, clickedSpace = game_solver.getSwap(copy.deepcopy(gameBoard))
+        if not is_manual and not gameIsOver:
+            firstSelectedGem, clickedSpace, predictedScore = game_solver.getSwap(copy.deepcopy(gameBoard))
             for event in pygame.event.get():
                 if event.type == QUIT or (event.type == KEYUP and event.key == K_ESCAPE):
                     pygame.quit()
@@ -220,7 +226,11 @@ def runGame(is_manual = False, game_solver = None):
                 firstSelectedGem = None # deselect the first gem
                 continue
 
-            score = perform_move(gameBoard, firstSwappingGem, secondSwappingGem, 0, animate = True)
+            score = perform_move(gameBoard, firstSwappingGem, secondSwappingGem,
+                                 score=0, simulation=False, random_fall=True)
+            if predictedScore > score:
+                print "inadmissable"
+                #import pdb; pdb.set_trace()
 
             firstSelectedGem = None
 
@@ -245,12 +255,16 @@ def runGame(is_manual = False, game_solver = None):
         pygame.display.update()
         FPSCLOCK.tick(FPS)
 
-def perform_move(gameBoard, firstSwappingGem, secondSwappingGem, score=0, animate = False):
+def perform_move(gameBoard, firstSwappingGem, secondSwappingGem, score=0, simulation=True, random_fall=False):
     # Show the swap animation on the screen.
 
+    # if simulation:
+    #     print "START PERFORM MOVE ON:"
+    #     print firstSwappingGem
+    #     print secondSwappingGem
     boardCopy = getBoardCopyMinusGems(gameBoard, (firstSwappingGem, secondSwappingGem))
 
-    if animate:
+    if not simulation:
         animateMovingGems(boardCopy, [firstSwappingGem, secondSwappingGem], [], score)
 
     # Swap the gems in the board data structure.
@@ -262,7 +276,7 @@ def perform_move(gameBoard, firstSwappingGem, secondSwappingGem, score=0, animat
     if not matchedGems:
         # Was not a matching move; swap the gems back
         # GAMESOUNDS['bad swap'].play()
-        if animate:
+        if not simulation:
             animateMovingGems(boardCopy, [firstSwappingGem, secondSwappingGem], [], score)
 
         gameBoard[firstSwappingGem['x']][firstSwappingGem['y']] = firstSwappingGem['imageNum']
@@ -292,7 +306,11 @@ def perform_move(gameBoard, firstSwappingGem, secondSwappingGem, score=0, animat
             score += scoreAdd
 
             # Drop the new gems.
-            fillBoardAndAnimate(gameBoard, points, score, animate)
+            fillBoardAndAnimate(gameBoard, points, score, simulation, random_fall)
+
+            # if simulation:
+            #     print
+            #     printBoard(gameBoard)
 
             # Check if there are any new matches.
             # import pdb; pdb.set_trace()
@@ -430,19 +448,21 @@ def getGemAt(board, x, y):
         return board[x][y]
 
 
-def getDropSlots(board, simulation = False):
+def getDropSlots(board, random_fall=False):
     # Creates a "drop slot" for each column and fills the slot with a
     # number of gems that that column is lacking. This function assumes
     # that the gems have been gravity dropped already.
-    boardCopy = copy.deepcopy(board)
-    pullDownAllGems(boardCopy)
+
 
     dropSlots = []
     for i in range(BOARDWIDTH):
         dropSlots.append([])
 
-    if simulation:
+    if not random_fall:
         return dropSlots
+
+    boardCopy = copy.deepcopy(board)
+    pullDownAllGems(boardCopy)
 
     # count the number of empty spaces in each column on the board
     for x in range(BOARDWIDTH):
@@ -551,12 +571,14 @@ def moveGems(board, movingGems):
             board[gem['x']][0] = gem['imageNum'] # move to top row
 
 
-def fillBoardAndAnimate(board, points, score, animate = False):
-    simulation = False
-    if animate == False:
-        simulation = True
-    dropSlots = getDropSlots(board, simulation)
-    while dropSlots != [[]] * BOARDWIDTH:
+def fillBoardAndAnimate(board, points, score, simulation=True, random_fall=False):
+
+    if simulation and random_fall:
+        pullDownAllGems(board)
+        return
+
+    dropSlots = getDropSlots(board, random_fall)
+    while dropSlots != ([[]] * BOARDWIDTH):
         # do the dropping animation as long as there are more gems to drop
         movingGems = getDroppingGems(board)
         for x in range(len(dropSlots)):
@@ -565,7 +587,7 @@ def fillBoardAndAnimate(board, points, score, animate = False):
                 movingGems.append({'imageNum': dropSlots[x][0], 'x': x, 'y': ROWABOVEBOARD, 'direction': DOWN})
 
         boardCopy = getBoardCopyMinusGems(board, movingGems)
-        if animate:
+        if not simulation:
             animateMovingGems(boardCopy, movingGems, points, score)
 
         moveGems(board, movingGems)
@@ -618,12 +640,30 @@ def drawScore(score):
     scoreRect.bottomleft = (10, WINDOWHEIGHT - 6)
     DISPLAYSURF.blit(scoreImg, scoreRect)
 
+def printBoard(board):
+    for y in range(BOARDHEIGHT):
+        for x in range(BOARDWIDTH):
+            print "%3d" %board[x][y],
+        print
 
 if __name__ == '__main__':
     parser = OptionParser()
     parser.add_option("-m", "--manual",
                       action="store_true", dest="IS_MANUAL", default=False,
                       help="Run game with manual control")
+    parser.add_option("-s", "--size",
+                      type="int", dest="BOARD_SIZE", default=8,
+                      help="Size of game board")
+    parser.add_option("-g", "--gems",
+                      type="int", dest="GEM_NUM", default=4,
+                      help="Number of gem types")
+    parser.add_option("-r", "--random-fall",
+                      action="store_true", dest="RANDOM_FALL", default=False,
+                      help="Simulate cascade with using simulation of random gems falling from top")
 
     (options, args) = parser.parse_args()
-    main(options.IS_MANUAL)
+
+    BOARDWIDTH = BOARDHEIGHT = options.BOARD_SIZE
+    NUMGEMIMAGES = options.GEM_NUM
+
+    main(options.IS_MANUAL, options.RANDOM_FALL)
