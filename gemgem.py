@@ -19,7 +19,7 @@ import random, time, pygame, sys, copy
 from pygame.locals import *
 from optparse import OptionParser
 
-FPS = 100000 # frames per second to update the screen
+FPS = 3000 # frames per second to update the screen
 WINDOWWIDTH = 600  # width of the program's window, in pixels
 WINDOWHEIGHT = 600 # height in pixels
 
@@ -67,53 +67,123 @@ RIGHT = 'right'
 EMPTY_SPACE = -1 # an arbitrary, nonpositive value
 ROWABOVEBOARD = 'row above board' # an arbitrary, noninteger value
 
+GREEDY = 'greedy'
+ASTAR = 'a*'
+
+class FringeState(object):
+    """ Every item in the fringe is a pair of position & path """
+    def __init__(self, board, swaps=[], swap_num=0):
+        self.board = board
+        self.swaps = swaps[:]
+        self.swap_num = swap_num
+
+class BoardMove(object):
+
+    def __init__(self, source_board, x, y, direction, random_fall):
+        self.first = self.second = self.dest_board = None
+        self.score = 0
+        self.random_fall = random_fall
+        self.source_board = copy.deepcopy(source_board)
+        self.create_dicts(x, y, direction)
+        if self.second is not None:
+            self.perform_move()
+
+    def create_dicts(self, x, y, direction):
+
+        gem = getGemAt(self.source_board, x, y)
+        gem_right = getGemAt(self.source_board, x + 1, y)
+        gem_down = getGemAt(self.source_board, x, y + 1)
+
+        self.first = {'x':x, 'y':y, 'imageNum': gem, 'direction':direction}
+        if direction == RIGHT and gem_right is not None:
+            self.second = {'x':x+1, 'y':y, 'imageNum': gem_right, 'direction':LEFT}
+        elif direction == DOWN and gem_down is not None:
+            self.second = {'x':x, 'y':y+1, 'imageNum': gem_down, 'direction':UP}
+
+    def perform_move(self):
+        self.dest_board, self.score = perform_move(copy.deepcopy(self.source_board), self.first, self.second,
+                                                   score=0, simulation=True, random_fall=self.random_fall)
+
+    def __cmp__(self, other):
+        if self.score < other.score:
+            return -1
+        if self.score > other.score:
+            return 1
+        return 0
+
+
 class Solver(object):
 
-    def __init__(self, random_fall):
+    def __init__(self, random_fall, solver_type):
         self.random_fall = random_fall
+        self.type = solver_type
+        self.uncertainty_thres = 0.5
 
-    def getSwap(self, board):
-        printBoard(board)
+    def getSwaps(self, board):
+        if self.type == GREEDY:
+            return [self.getSwapGreedy(board)]
+        elif self.type == ASTAR:
+            return self.getSwapsAstar(board)
+
+    def getSwapsUsingSearch(self, start_board, fringe):
+        visited = []
+        fringe.push(FringeState(start_board))
+        while not self.isCutoff(fringe):
+            cur = fringe.pop()
+            if self.isGoal(cur):
+                return cur.swaps
+
+            if cur.state in visited:
+                continue
+
+            for successor in self.getPossibleMoves(cur.board):
+                pass
+
+    def getSwapsAstar(self, board):
+        fringe = []
+        return self.getSwapsUsingSearch(board, fringe)
+
+    def isCutoff(self, board_list):
+        for b in board_list:
+            if not self.isUncertain(b):
+                return False
+        return True
+
+    def isUncertain(self, board):
+        uncertainty = reduce(lambda s1, s2: s1 + s2, board).count(-1) / (BOARDHEIGHT * BOARDWIDTH)
+        if uncertainty > self.uncertainty_thres:
+            return True
+        return False
+
+    def getPossibleMoves(self, board):
         moves = []
         for y in range(BOARDHEIGHT):
             for x in range(BOARDWIDTH):
-                gem = getGemAt(board, x, y)
-                gem_right = getGemAt(board, x + 1, y)
-                gem_down = getGemAt(board, x, y + 1)
 
-                if gem_right is not None:
-                    first = {'y':y, 'x':x, 'imageNum': gem, 'direction':RIGHT}
-                    second = {'y':y, 'x':x + 1, 'imageNum': gem_right, 'direction':LEFT}
-                    score = perform_move(copy.deepcopy(board), first, second,
-                                         score=0, simulation=True, random_fall=self.random_fall)
-                    if score > 0:
-                        moves.append((score, first, second))
+                move_right = BoardMove(copy.deepcopy(board), x, y, RIGHT, self.random_fall)
+                move_down = BoardMove(copy.deepcopy(board), x, y, DOWN, self.random_fall)
 
-                if gem_down is not None:
-                    first = {'y':y, 'x':x, 'imageNum': gem, 'direction':DOWN}
-                    second = {'y':y + 1, 'x':x, 'imageNum': gem_down, 'direction':UP}
-                    score = perform_move(copy.deepcopy(board), first, second,
-                                         score=0,  simulation=True, random_fall=self.random_fall)
-                    if score > 0:
-                        moves.append((score, first, second))
+                for move in (move_right, move_down):
+                    if move.score > 0:
+                        moves.append(move)
+
+        return moves
+
+    def getSwapGreedy(self, board):
+
+        moves = self.getPossibleMoves(board)
 
         if moves:
             best = max(moves)
-
-            print
-            print "MOVES:"
-            for move in moves:
-                print move
-
-            print
-            print "BEST:"
-            print best
-
-
+            # print
+            # print "MOVES:"
+            # for move in moves:
+            #     print move
+            # print
+            # print "BEST:"
+            # print best
             #import pdb; pdb.set_trace()
-
-            return best[1], best[2], best[0]
-
+            return best.first, best.second, best.score
         else:
             return None, None, None
 
@@ -155,7 +225,7 @@ def main(is_manual=False, random_fall=False):
                              GEMIMAGESIZE))
             BOARDRECTS[x].append(r)
 
-    game_solver = Solver(random_fall)
+    game_solver = Solver(random_fall, GREEDY)
     while True:
         runGame(is_manual, game_solver)
 
@@ -174,12 +244,19 @@ def runGame(is_manual=False, game_solver=None):
     gameIsOver = False
     clickContinueTextSurf = None
 
+    swap_list = []
+
     while True: # main game loop
 
         do_move = True
 
         if not is_manual and not gameIsOver:
-            firstSelectedGem, clickedSpace, predictedScore = game_solver.getSwap(copy.deepcopy(gameBoard))
+            if not swap_list:
+                swap_list = game_solver.getSwaps(copy.deepcopy(gameBoard))
+
+            firstSelectedGem, clickedSpace, predictedScore = swap_list.pop(0)
+
+            #firstSelectedGem, clickedSpace, predictedScore = game_solver.getSwaps(copy.deepcopy(gameBoard))
             for event in pygame.event.get():
                 if event.type == QUIT or (event.type == KEYUP and event.key == K_ESCAPE):
                     pygame.quit()
@@ -226,10 +303,10 @@ def runGame(is_manual=False, game_solver=None):
                 firstSelectedGem = None # deselect the first gem
                 continue
 
-            score = perform_move(gameBoard, firstSwappingGem, secondSwappingGem,
-                                 score=0, simulation=False, random_fall=True)
-            if predictedScore > score:
-                print "inadmissable"
+            new_board, score = perform_move(gameBoard, firstSwappingGem, secondSwappingGem,
+                                 score, simulation=False, random_fall=True)
+            # if predictedScore > score:
+            #     print "inadmissable"
                 #import pdb; pdb.set_trace()
 
             firstSelectedGem = None
@@ -316,7 +393,7 @@ def perform_move(gameBoard, firstSwappingGem, secondSwappingGem, score=0, simula
             # import pdb; pdb.set_trace()
             matchedGems = findMatchingGems(gameBoard)
 
-    return score
+    return gameBoard, score
 
 def getSwappingGems(board, firstXY, secondXY):
     # If the gems at the (X, Y) coordinates of the two gems are adjacent,
@@ -628,9 +705,14 @@ def getBoardCopyMinusGems(board, gems):
     boardCopy = copy.deepcopy(board)
 
     # Remove some of the gems from this board data structure copy.
+
     for gem in gems:
         if gem['y'] != ROWABOVEBOARD:
-            boardCopy[gem['x']][gem['y']] = EMPTY_SPACE
+            try:
+                boardCopy[gem['x']][gem['y']] = EMPTY_SPACE
+            except:
+                import pdb; pdb.set_trace()
+
     return boardCopy
 
 
@@ -638,7 +720,7 @@ def drawScore(score):
     scoreImg = BASICFONT.render(str(score), 1, SCORECOLOR)
     scoreRect = scoreImg.get_rect()
     scoreRect.bottomleft = (10, WINDOWHEIGHT - 6)
-    DISPLAYSURF.blit(scoreImg, scoreRect)
+    DISPLAYSURF.    blit(scoreImg, scoreRect)
 
 def printBoard(board):
     for y in range(BOARDHEIGHT):
