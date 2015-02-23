@@ -157,24 +157,26 @@ class Solver(object):
     def getSwapsLBFS(self, start_board, cur_score):
         fringe = [] # In practice - a queue.
         visited = set()
+        leaves = []
         start_state = FringeState(start_board, total_score=cur_score)
         best = start_state
         fringe.append(start_state)
 
-        while not self.isCutoff(fringe):
+        while fringe:
             print len(fringe)
 
             cur = fringe.pop(0)
-            if self.isGoal(cur):
-                return cur.moves
 
             board_tuple = boardTuple(cur.board)
             if board_tuple in visited:
                 continue
+            visited.add(board_tuple)
 
             possible_moves = self.getPossibleMoves(cur.board)
-            if not possible_moves:
-                best = max([best, cur])
+            is_uncertain = self.isUncertain(cur.board)
+            if not possible_moves or is_uncertain:
+                leaves.append(cur)
+                continue
 
             for move in possible_moves:
                 fringe.append(FringeState(move.dest_board, cur.moves + [move],
@@ -182,9 +184,14 @@ class Solver(object):
                                           cur.total_score + move.score))
                 self.expanded_nodes += 1
 
-            visited.add(board_tuple)
+        # Find goal
+        goal_states = [state for state in leaves if self.isGoal(state)]
+        if goal_states:
+            best = min(goal_states, key=lambda g:len(g.moves))
+        else:
+            # Find move that brings us closest to goal
+            best = max(leaves)
 
-        best = max(fringe + [best])
         if SEND_MULTIPLE:
             return best.moves
         else:
@@ -301,8 +308,11 @@ def runGame(is_manual=False, game_solver=None):
     swap_list = []
 
     while True: # main game loop
-
         do_move = True
+        if score >= GOAL_SCORE:
+            firstSelectedGem = None
+            clickedSpace = None
+            gameIsOver = True
 
         if not is_manual and not gameIsOver:
             if not swap_list:
