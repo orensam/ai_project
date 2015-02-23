@@ -18,6 +18,7 @@ with the following keys:
 import random, time, pygame, sys, copy
 from pygame.locals import *
 from optparse import OptionParser
+import math
 
 FPS = 20000 # frames per second to update the screen
 WINDOWWIDTH = 600  # width of the program's window, in pixels
@@ -150,7 +151,7 @@ class Solver(object):
 
     def getSwaps(self, board, cur_score=0):
         if self.type == GREEDY:
-            return [self.getSwapGreedy(board)]
+            return self.getSwapGreedy(board)
         elif self.type == LBFS:
             return self.getSwapsLBFS(board, cur_score)
 
@@ -190,7 +191,7 @@ class Solver(object):
             best = min(goal_states, key=lambda g:len(g.moves))
         else:
             # Find move that brings us closest to goal
-            best = max(leaves)
+            best = max(leaves, key=lambda fs: self.getStateHeuristic(fs))
 
         if SEND_MULTIPLE:
             return best.moves
@@ -199,13 +200,6 @@ class Solver(object):
 
     def isGoal(self, fringe_state):
         return fringe_state.total_score >= GOAL_SCORE
-
-    def isCutoff(self, states):
-        """
-        All boards are either above uncertainty threshold, or without possible moves
-        """
-        res = [self.isUncertain(state.board) or not canMakeMove(state.board) for state in states]
-        return all(res)
 
     def isUncertain(self, board):
         #import pdb; pdb.set_trace()
@@ -233,7 +227,7 @@ class Solver(object):
         moves = self.getPossibleMoves(board)
 
         if moves:
-            best = max(moves)
+            best = max(moves, key=lambda m: self.getMoveHeuristic(m))
             print
             print "MOVES:"
             for move in moves:
@@ -242,10 +236,79 @@ class Solver(object):
             print "BEST:"
             print best
             print
-            import pdb; pdb.set_trace()
-            return best.first, best.second, best.score
+            #import pdb; pdb.set_trace()
+            return [best]
         else:
-            return None, None, None
+            return []
+
+    def getMoveHeuristic(self, move, w_score=1, w_entropy=0, w_pairs=1, w_nmoves=2, w_depth=20, w_touching=1):
+        dest_board = move.dest_board
+        nmoves = self.getMoveNumber(dest_board)
+        if nmoves > 25:
+            w_nmoves = 0
+        return w_score * move.score + \
+               w_entropy * 1./self.getEntropy(dest_board) + \
+               w_pairs * self.getPairs(dest_board) + \
+               w_nmoves * nmoves + \
+               w_depth * self.getDepthFactor(move) + \
+               w_touching * self.getTouchingGemsNum(dest_board)
+
+    def getStateHeuristic(self, fs, w_score=1, w_entropy=0, w_pairs=0, w_nmoves=2, w_depth=1, w_touching=1):
+        dest_board = fs.moves[-1].dest_board
+        first_move = fs.moves[0]
+        nmoves = self.getMoveNumber(dest_board)
+        if nmoves > 8:
+            w_nmoves = 0
+        return w_score * fs.getMovesFactor() + \
+               w_entropy * 1./self.getEntropy(dest_board) + \
+               w_pairs * self.getPairs(dest_board) + \
+               w_nmoves * nmoves + \
+               w_depth * self.getDepthFactor(first_move) + \
+               w_touching * self.getTouchingGemsNum(first_move.dest_board)
+
+    #### Heuristics ####
+
+    def getTouchingGemsNum(self, board):
+        num_of_touching = 0
+        for y in range(BOARDHEIGHT):
+            for x in range(BOARDWIDTH):
+                if getGemAt(board, x, y) == -1:
+                    perimeter = [getGemAt(board, a, b) for (a, b) in
+                                 [(x+1, y), (x, y+1), (x-1, y), (x, y-1)]]
+                    num_of_touching += len([x for x in perimeter if x not in (-1, None)])
+        return num_of_touching
+
+    def getDepthFactor(self, move):
+        print max((move.first['y'], move.second['y']))
+        return max((move.first['y'], move.second['y']))
+
+    def getPairs(self, board):
+        num_of_pairs = 0
+        for y in range(BOARDHEIGHT):
+            for x in range(BOARDWIDTH):
+                if getGemAt(board, x, y) == getGemAt(board, x + 1, y):
+                    num_of_pairs += 1
+                if getGemAt(board, x, y) == getGemAt(board, x, y + 1):
+                    num_of_pairs += 1
+        #print "Num of pairs:  %d " %num_of_pairs
+        return num_of_pairs
+
+    def getEntropy(self, board):
+        counts = [0] * NUMGEMIMAGES
+        for col in board:
+            for gem in col:
+                counts[gem] += 1
+        tot = sum(counts)
+        probs = [float(c)/tot for c in counts]
+        entropy = -sum([p * math.log(p, 2) for p in probs if p > 0])
+        # print "Expected entropy: %.3f" %entropy
+        return entropy
+
+    def getMoveNumber(self, board):
+        res = len(self.getPossibleMoves(board))
+        print "Num of moves:  %d " %res
+        return res
+
 
 def main(is_manual=False, random_fall=False):
 
@@ -285,7 +348,7 @@ def main(is_manual=False, random_fall=False):
                              GEMIMAGESIZE))
             BOARDRECTS[x].append(r)
 
-    game_solver = Solver(random_fall, LBFS)
+    game_solver = Solver(random_fall, GREEDY)
     while True:
         runGame(is_manual, game_solver)
 
@@ -829,11 +892,15 @@ if __name__ == '__main__':
     parser.add_option("-c", "--score",
                       type="int", dest="GOAL", default=100,
                       help="Goal score")
+    parser.add_option("-f", "--fps",
+                      type="int", dest="USER_FPS", default=30,
+                      help="Game animation FPS")
 
     (options, args) = parser.parse_args()
 
     BOARDWIDTH = BOARDHEIGHT = options.BOARD_SIZE
     NUMGEMIMAGES = options.GEM_NUM
     GOAL_SCORE = options.GOAL
+    FPS = options.USER_FPS
 
     main(options.IS_MANUAL, options.RANDOM_FALL)
