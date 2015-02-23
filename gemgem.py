@@ -19,7 +19,7 @@ import random, time, pygame, sys, copy
 from pygame.locals import *
 from optparse import OptionParser
 
-FPS = 3000 # frames per second to update the screen
+FPS = 20 # frames per second to update the screen
 WINDOWWIDTH = 600  # width of the program's window, in pixels
 WINDOWHEIGHT = 600 # height in pixels
 
@@ -117,12 +117,25 @@ class FringeState(object):
         self.total_move_num = total_move_num
         self.total_score = total_score
 
+    def getMovesScore(self):
+        return sum([m.score for m in self.moves])
+
+    def __cmp__(self, other):
+        my_score = self.getMovesScore()
+        other_score = other.getMovesScore()
+        if my_score < other_score:
+            return -1
+        if my_score > other_score:
+            return 1
+        return 0
+
 class Solver(object):
 
     def __init__(self, random_fall, solver_type):
         self.random_fall = random_fall
         self.type = solver_type
-        self.uncertainty_thres = 0.5
+        self.uncertainty_thres = 0.1
+        self.expanded_nodes = 0
 
     def getSwaps(self, board, cur_score=0):
         if self.type == GREEDY:
@@ -132,37 +145,58 @@ class Solver(object):
 
     def getSwapsUsingSearch(self, start_board, fringe, cur_score):
         visited = []
-        fringe.append(FringeState(start_board, total_score=cur_score))
+        start_state = FringeState(start_board, total_score=cur_score)
+        best = start_state
+        fringe.append(start_state)
+
         while not self.isCutoff(fringe):
             print len(fringe)
-            cur = fringe.pop()
+
+            cur = fringe.pop(0)
             if self.isGoal(cur):
                 return cur.moves
 
             if cur.board in visited:
                 continue
 
-            for succ in self.getPossibleMoves(cur.board):
-                fringe.append(FringeState(succ.dest_board, cur.moves + [succ], 'CHANGETHIS',
-                                          cur.total_score + succ.score))
-        best = max(fringe, key=lambda fs: sum([m.score for m in fs.moves]))
+            possible_moves = self.getPossibleMoves(cur.board)
+            if not possible_moves:
+                best = max([best, cur])
+
+            for move in possible_moves:
+                fringe.append(FringeState(move.dest_board, cur.moves + [move], 'CHANGETHIS',
+                                          cur.total_score + move.score))
+                self.expanded_nodes += 1
+
+            visited.append(cur.board)
+
+        best = max(fringe + [best])
         return best.moves
 
     def isGoal(self, fringe_state):
-        return fringe_state.total_score > GOAL_SCORE
+        return fringe_state.total_score >= GOAL_SCORE
 
     def getSwapsAstar(self, board, cur_score):
         fringe = []
         return self.getSwapsUsingSearch(board, fringe, cur_score)
 
     def isCutoff(self, states):
-        for state in states:
-            if not self.isUncertain(state.board):
-                return False
-        return True
+        """
+        All boards are either above uncertainty threshold, or without possible moves
+        """
+
+        res = [self.isUncertain(state.board) or not canMakeMove(state.board) for state in states]
+        return all(res)
+
+
+        # for state in states:
+        #     if not self.isUncertain(state.board) or canMakeMove(state.board):
+        #         return False
+        # return True
 
     def isUncertain(self, board):
-        uncertainty = reduce(lambda s1, s2: s1 + s2, board).count(-1) / (BOARDHEIGHT * BOARDWIDTH)
+        #import pdb; pdb.set_trace()
+        uncertainty = reduce(lambda s1, s2: s1 + s2, board).count(-1) / float((BOARDHEIGHT * BOARDWIDTH))
         if uncertainty > self.uncertainty_thres:
             return True
         return False
@@ -266,13 +300,22 @@ def runGame(is_manual=False, game_solver=None):
         if not is_manual and not gameIsOver:
             if not swap_list:
                 swap_list = game_solver.getSwaps(copy.deepcopy(gameBoard), score)
+
                 print "Retrieving new swap list:"
-                print swap_list
+                for move in swap_list: print move
                 print
+                # import pdb; pdb.set_trace()
 
-            firstSelectedGem, clickedSpace, predictedScore = swap_list.pop(0)
+            if not swap_list:
+                firstSelectedGem = None
+                clickedSpace = None
+                gameIsOver = True
+                print '** Total Number Of Nodes Expanded:' , game_solver.expanded_nodes , ' **'
+            else:
+                move = swap_list.pop(0)
+                firstSelectedGem = move.first
+                clickedSpace = move.second
 
-            #firstSelectedGem, clickedSpace, predictedScore = game_solver.getSwaps(copy.deepcopy(gameBoard))
             for event in pygame.event.get():
                 if event.type == QUIT or (event.type == KEYUP and event.key == K_ESCAPE):
                     pygame.quit()
@@ -321,9 +364,6 @@ def runGame(is_manual=False, game_solver=None):
 
             new_board, score = perform_move(gameBoard, firstSwappingGem, secondSwappingGem,
                                  score, simulation=False, random_fall=True)
-            # if predictedScore > score:
-            #     print "inadmissable"
-                #import pdb; pdb.set_trace()
 
             firstSelectedGem = None
 
@@ -759,12 +799,13 @@ if __name__ == '__main__':
                       action="store_true", dest="RANDOM_FALL", default=False,
                       help="Simulate cascade with using simulation of random gems falling from top")
     parser.add_option("-c", "--score",
-                  type="int", dest="GOAL_SCORE", default=100,
-                  help="Goal score")
+                      type="int", dest="GOAL", default=100,
+                      help="Goal score")
 
     (options, args) = parser.parse_args()
 
     BOARDWIDTH = BOARDHEIGHT = options.BOARD_SIZE
     NUMGEMIMAGES = options.GEM_NUM
+    GOAL_SCORE = options.GOAL
 
     main(options.IS_MANUAL, options.RANDOM_FALL)
