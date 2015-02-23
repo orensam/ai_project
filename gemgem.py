@@ -19,7 +19,7 @@ import random, time, pygame, sys, copy
 from pygame.locals import *
 from optparse import OptionParser
 
-FPS = 20 # frames per second to update the screen
+FPS = 20000 # frames per second to update the screen
 WINDOWWIDTH = 600  # width of the program's window, in pixels
 WINDOWHEIGHT = 600 # height in pixels
 
@@ -41,6 +41,7 @@ DEDUCTSPEED = 0.8 # reduces score by 1 point every DEDUCTSPEED seconds.
 
 #             R    G    B
 PURPLE    = (255,   0, 255)
+GREEN     = (0,   255,  50)
 LIGHTBLUE = (170, 190, 255)
 BLUE      = (  0,   0, 255)
 RED       = (255, 100, 100)
@@ -52,6 +53,7 @@ GRIDCOLOR = BLUE # color of the game board
 GAMEOVERCOLOR = RED # color of the "Game over" text.
 GAMEOVERBGCOLOR = BLACK # background color of the "Game over" text.
 SCORECOLOR = BROWN # color of the text for the player's score
+MOVESCOLOR =  RED # color of the text for the number of moves
 
 # The amount of space to the sides of the board to the edge of the window
 # is used several times, so calculate it once here and store in variables.
@@ -68,8 +70,9 @@ EMPTY_SPACE = -1 # an arbitrary, nonpositive value
 ROWABOVEBOARD = 'row above board' # an arbitrary, noninteger value
 
 GREEDY = 'greedy'
-ASTAR = 'a*'
+LBFS = 'lbfs'
 GOAL_SCORE = 100
+SEND_MULTIPLE = False
 
 
 class BoardMove(object):
@@ -120,9 +123,17 @@ class FringeState(object):
     def getMovesScore(self):
         return sum([m.score for m in self.moves])
 
+    def getMovesFactor(self):
+        if not self.moves:
+            return 0
+        return self.getMovesScore() / len(self.moves)
+
+    def getCompareValue(self):
+        return self.getMovesFactor()
+
     def __cmp__(self, other):
-        my_score = self.getMovesScore()
-        other_score = other.getMovesScore()
+        my_score = self.getCompareValue()
+        other_score = other.getCompareValue()
         if my_score < other_score:
             return -1
         if my_score > other_score:
@@ -140,11 +151,12 @@ class Solver(object):
     def getSwaps(self, board, cur_score=0):
         if self.type == GREEDY:
             return [self.getSwapGreedy(board)]
-        elif self.type == ASTAR:
-            return self.getSwapsAstar(board, cur_score)
+        elif self.type == LBFS:
+            return self.getSwapsLBFS(board, cur_score)
 
-    def getSwapsUsingSearch(self, start_board, fringe, cur_score):
-        visited = []
+    def getSwapsLBFS(self, start_board, cur_score):
+        fringe = [] # In practice - a queue.
+        visited = set()
         start_state = FringeState(start_board, total_score=cur_score)
         best = start_state
         fringe.append(start_state)
@@ -156,7 +168,8 @@ class Solver(object):
             if self.isGoal(cur):
                 return cur.moves
 
-            if cur.board in visited:
+            board_tuple = boardTuple(cur.board)
+            if board_tuple in visited:
                 continue
 
             possible_moves = self.getPossibleMoves(cur.board)
@@ -164,35 +177,28 @@ class Solver(object):
                 best = max([best, cur])
 
             for move in possible_moves:
-                fringe.append(FringeState(move.dest_board, cur.moves + [move], 'CHANGETHIS',
+                fringe.append(FringeState(move.dest_board, cur.moves + [move],
+                                          cur.total_move_num + 1,
                                           cur.total_score + move.score))
                 self.expanded_nodes += 1
 
-            visited.append(cur.board)
+            visited.add(board_tuple)
 
         best = max(fringe + [best])
-        return best.moves
+        if SEND_MULTIPLE:
+            return best.moves
+        else:
+            return best.moves[0:1]
 
     def isGoal(self, fringe_state):
         return fringe_state.total_score >= GOAL_SCORE
-
-    def getSwapsAstar(self, board, cur_score):
-        fringe = []
-        return self.getSwapsUsingSearch(board, fringe, cur_score)
 
     def isCutoff(self, states):
         """
         All boards are either above uncertainty threshold, or without possible moves
         """
-
         res = [self.isUncertain(state.board) or not canMakeMove(state.board) for state in states]
         return all(res)
-
-
-        # for state in states:
-        #     if not self.isUncertain(state.board) or canMakeMove(state.board):
-        #         return False
-        # return True
 
     def isUncertain(self, board):
         #import pdb; pdb.set_trace()
@@ -272,7 +278,7 @@ def main(is_manual=False, random_fall=False):
                              GEMIMAGESIZE))
             BOARDRECTS[x].append(r)
 
-    game_solver = Solver(random_fall, ASTAR)
+    game_solver = Solver(random_fall, LBFS)
     while True:
         runGame(is_manual, game_solver)
 
@@ -283,6 +289,7 @@ def runGame(is_manual=False, game_solver=None):
     # initalize the board
     gameBoard = getBlankBoard()
     score = 0
+    total_moves = 0
     fillBoardAndAnimate(gameBoard, [], score, simulation=False, random_fall=True) # Drop the initial gems.
     # initialize variables for the start of a new game
     firstSelectedGem = None
@@ -310,6 +317,7 @@ def runGame(is_manual=False, game_solver=None):
                 firstSelectedGem = None
                 clickedSpace = None
                 gameIsOver = True
+                print "** Total moves: %d" %total_moves
                 print '** Total Number Of Nodes Expanded:' , game_solver.expanded_nodes , ' **'
             else:
                 move = swap_list.pop(0)
@@ -363,8 +371,9 @@ def runGame(is_manual=False, game_solver=None):
                 continue
 
             new_board, score = perform_move(gameBoard, firstSwappingGem, secondSwappingGem,
-                                 score, simulation=False, random_fall=True)
+                                            score, simulation=False, random_fall=True)
 
+            total_moves += 1
             firstSelectedGem = None
 
         if not canMakeMove(gameBoard):
@@ -385,6 +394,7 @@ def runGame(is_manual=False, game_solver=None):
             DISPLAYSURF.blit(clickContinueTextSurf, clickContinueTextRect)
 
         drawScore(score)
+        drawMoves(total_moves)
         pygame.display.update()
         FPSCLOCK.tick(FPS)
 
@@ -771,18 +781,26 @@ def getBoardCopyMinusGems(board, gems):
 
     return boardCopy
 
+def drawMoves(k):
+    movesImg = BASICFONT.render(str(k), 1, MOVESCOLOR)
+    movesRect = movesImg.get_rect()
+    movesRect.bottomleft = (WINDOWWIDTH - 70, WINDOWHEIGHT - 6)
+    DISPLAYSURF.blit(movesImg, movesRect)
 
 def drawScore(score):
     scoreImg = BASICFONT.render(str(score), 1, SCORECOLOR)
     scoreRect = scoreImg.get_rect()
     scoreRect.bottomleft = (10, WINDOWHEIGHT - 6)
-    DISPLAYSURF.    blit(scoreImg, scoreRect)
+    DISPLAYSURF.blit(scoreImg, scoreRect)
 
 def printBoard(board):
     for y in range(BOARDHEIGHT):
         for x in range(BOARDWIDTH):
             print "%3d" %board[x][y],
         print
+
+def boardTuple(board):
+    return tuple([tuple(col) for col in board])
 
 if __name__ == '__main__':
     parser = OptionParser()
