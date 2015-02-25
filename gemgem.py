@@ -279,8 +279,8 @@ class Solver(object):
         return num_of_touching
 
     def getDepthFactor(self, move):
-        print max((move.first['y'], move.second['y']))
-        return max((move.first['y'], move.second['y']))
+        line = max((move.first['y'], move.second['y']))
+        return line
 
     def getPairs(self, board):
         num_of_pairs = 0
@@ -306,7 +306,7 @@ class Solver(object):
 
     def getMoveNumber(self, board):
         res = len(self.getPossibleMoves(board))
-        print "Num of moves:  %d " %res
+        #print "Num of moves:  %d " %res
         return res
 
 
@@ -348,7 +348,7 @@ def main(is_manual=False, random_fall=False):
                              GEMIMAGESIZE))
             BOARDRECTS[x].append(r)
 
-    game_solver = Solver(random_fall, GREEDY)
+    game_solver = Solver(random_fall, LBFS)
     while True:
         runGame(is_manual, game_solver)
 
@@ -691,7 +691,8 @@ def getDropSlots(board, random_fall=False):
                     # the same gems next to each other when they drop.
                     neighborGem = getGemAt(boardCopy, x + offsetX, y + offsetY)
                     if neighborGem != None and neighborGem in possibleGems:
-                        possibleGems.remove(neighborGem)
+                        pass
+                        #possibleGems.remove(neighborGem)
 
                 newGem = random.choice(possibleGems)
                 boardCopy[x][y] = newGem
