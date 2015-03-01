@@ -364,8 +364,9 @@ def main(is_manual=False, random_fall=False):
 
     game_solver = Solver(random_fall, LBFS)
     while True:
-        print "NEW GAME!!!!!!"
-        runGame(is_manual, game_solver)
+        print "New game started"
+        score, moves = runGame(is_manual, game_solver)
+        print "Game ended: %d points in %d moves" %(score, moves)
 
 
 def runGame(is_manual=False, game_solver=None):
@@ -377,10 +378,7 @@ def runGame(is_manual=False, game_solver=None):
     total_moves = 0
     fillBoardAndAnimate(gameBoard, [], score, total_moves, simulation=False, random_fall=False, is_first=True) # Drop the initial gems.
     # Draw the board.
-    DISPLAYSURF.fill(BGCOLOR)
-    drawBoard(gameBoard)
-    pygame.display.update()
-    FPSCLOCK.tick(FPS)
+    draw_window(gameBoard, None, score, total_moves)
 
     # initialize variables for the start of a new game
     firstSelectedGem = None
@@ -401,13 +399,13 @@ def runGame(is_manual=False, game_solver=None):
 
         if not is_manual and not gameIsOver:
             if not swap_list:
-                print "START SOLVER"
+                #print "START SOLVER"
                 swap_list = game_solver.getSwaps(copy.deepcopy(gameBoard), score)
-                print "END SOLVER"
+                #print "END SOLVER"
 
-                print "Retrieving new swap list:"
-                for move in swap_list: print move
-                print
+                # print "Retrieving new swap list:"
+                # for move in swap_list: print move
+                # print
                 # import pdb; pdb.set_trace()
 
             if not swap_list:
@@ -477,10 +475,7 @@ def runGame(is_manual=False, game_solver=None):
             gameIsOver = True
 
         # Draw the board.
-        DISPLAYSURF.fill(BGCOLOR)
-        drawBoard(gameBoard)
-        if firstSelectedGem != None:
-            highlightSpace(firstSelectedGem['x'], firstSelectedGem['y'])
+        draw_window(gameBoard, firstSelectedGem, score, total_moves)
 
         if gameIsOver:
             if clickContinueTextSurf == None:
@@ -490,12 +485,17 @@ def runGame(is_manual=False, game_solver=None):
                 clickContinueTextRect = clickContinueTextSurf.get_rect()
                 clickContinueTextRect.center = int(WINDOWWIDTH / 2), int(WINDOWHEIGHT / 2)
             DISPLAYSURF.blit(clickContinueTextSurf, clickContinueTextRect)
-            return
+            return score, total_moves
 
-        drawScore(score)
-        drawMoves(total_moves)
-        pygame.display.update()
-        FPSCLOCK.tick(FPS)
+def draw_window(board, firstSelectedGem, score, moves):
+    DISPLAYSURF.fill(BGCOLOR)
+    drawBoard(board)
+    if firstSelectedGem != None:
+        highlightSpace(firstSelectedGem['x'], firstSelectedGem['y'])
+    drawScore(score)
+    drawMoves(moves)
+    pygame.display.update()
+    FPSCLOCK.tick(FPS)
 
 def perform_move(gameBoard, firstSwappingGem, secondSwappingGem, score=0, moves=0, simulation=True, random_fall=False):
     # Show the swap animation on the screen.
