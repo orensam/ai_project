@@ -375,7 +375,12 @@ def runGame(is_manual=False, game_solver=None):
     gameBoard = getBlankBoard()
     score = 0
     total_moves = 0
-    fillBoardAndAnimate(gameBoard, [], score, simulation=False, random_fall=True) # Drop the initial gems.
+    fillBoardAndAnimate(gameBoard, [], score, total_moves, simulation=False, random_fall=False, is_first=True) # Drop the initial gems.
+    # Draw the board.
+    DISPLAYSURF.fill(BGCOLOR)
+    drawBoard(gameBoard)
+    pygame.display.update()
+    FPSCLOCK.tick(FPS)
 
     # initialize variables for the start of a new game
     firstSelectedGem = None
@@ -388,14 +393,6 @@ def runGame(is_manual=False, game_solver=None):
 
     while True: # main game loop
 
-        # Draw the board.
-        DISPLAYSURF.fill(BGCOLOR)
-        drawBoard(gameBoard)
-        if firstSelectedGem != None:
-            highlightSpace(firstSelectedGem['x'], firstSelectedGem['y'])
-
-
-
         do_move = True
         if score >= GOAL_SCORE:
             firstSelectedGem = None
@@ -404,7 +401,9 @@ def runGame(is_manual=False, game_solver=None):
 
         if not is_manual and not gameIsOver:
             if not swap_list:
+                print "START SOLVER"
                 swap_list = game_solver.getSwaps(copy.deepcopy(gameBoard), score)
+                print "END SOLVER"
 
                 print "Retrieving new swap list:"
                 for move in swap_list: print move
@@ -469,7 +468,7 @@ def runGame(is_manual=False, game_solver=None):
                 continue
 
             new_board, score = perform_move(gameBoard, firstSwappingGem, secondSwappingGem,
-                                            score, simulation=False, random_fall=True)
+                                            score, total_moves, simulation=False, random_fall=True)
 
             total_moves += 1
             firstSelectedGem = None
@@ -478,10 +477,10 @@ def runGame(is_manual=False, game_solver=None):
             gameIsOver = True
 
         # Draw the board.
-        # DISPLAYSURF.fill(BGCOLOR)
-        # drawBoard(gameBoard)
-        # if firstSelectedGem != None:
-        #     highlightSpace(firstSelectedGem['x'], firstSelectedGem['y'])
+        DISPLAYSURF.fill(BGCOLOR)
+        drawBoard(gameBoard)
+        if firstSelectedGem != None:
+            highlightSpace(firstSelectedGem['x'], firstSelectedGem['y'])
 
         if gameIsOver:
             if clickContinueTextSurf == None:
@@ -498,7 +497,7 @@ def runGame(is_manual=False, game_solver=None):
         pygame.display.update()
         FPSCLOCK.tick(FPS)
 
-def perform_move(gameBoard, firstSwappingGem, secondSwappingGem, score=0, simulation=True, random_fall=False):
+def perform_move(gameBoard, firstSwappingGem, secondSwappingGem, score=0, moves=0, simulation=True, random_fall=False):
     # Show the swap animation on the screen.
 
     # if simulation:
@@ -508,7 +507,7 @@ def perform_move(gameBoard, firstSwappingGem, secondSwappingGem, score=0, simula
     boardCopy = getBoardCopyMinusGems(gameBoard, (firstSwappingGem, secondSwappingGem))
 
     if not simulation:
-        animateMovingGems(boardCopy, [firstSwappingGem, secondSwappingGem], [], score)
+        animateMovingGems(boardCopy, [firstSwappingGem, secondSwappingGem], [], score, moves)
 
     # Swap the gems in the board data structure.
     gameBoard[firstSwappingGem['x']][firstSwappingGem['y']] = secondSwappingGem['imageNum']
@@ -520,7 +519,7 @@ def perform_move(gameBoard, firstSwappingGem, secondSwappingGem, score=0, simula
         # Was not a matching move; swap the gems back
         # GAMESOUNDS['bad swap'].play()
         if not simulation:
-            animateMovingGems(boardCopy, [firstSwappingGem, secondSwappingGem], [], score)
+            animateMovingGems(boardCopy, [firstSwappingGem, secondSwappingGem], [], score, moves)
 
         gameBoard[firstSwappingGem['x']][firstSwappingGem['y']] = firstSwappingGem['imageNum']
         gameBoard[secondSwappingGem['x']][secondSwappingGem['y']] = secondSwappingGem['imageNum']
@@ -549,7 +548,7 @@ def perform_move(gameBoard, firstSwappingGem, secondSwappingGem, score=0, simula
             score += scoreAdd
 
             # Drop the new gems.
-            fillBoardAndAnimate(gameBoard, points, score, simulation, random_fall)
+            fillBoardAndAnimate(gameBoard, points, score, moves, simulation, random_fall)
 
             # if simulation:
             #     print
@@ -691,7 +690,7 @@ def getGemAt(board, x, y):
         return board[x][y]
 
 
-def getDropSlots(board, random_fall=False):
+def getDropSlots(board, simulation=True, random_fall=False, is_first=False):
     # Creates a "drop slot" for each column and fills the slot with a
     # number of gems that that column is lacking. This function assumes
     # that the gems have been gravity dropped already.
@@ -701,7 +700,7 @@ def getDropSlots(board, random_fall=False):
     for i in range(BOARDWIDTH):
         dropSlots.append([])
 
-    if not random_fall:
+    if simulation and not random_fall:
         return dropSlots
 
     boardCopy = copy.deepcopy(board)
@@ -712,14 +711,14 @@ def getDropSlots(board, random_fall=False):
         for y in range(BOARDHEIGHT-1, -1, -1): # start from bottom, going up
             if boardCopy[x][y] == EMPTY_SPACE:
                 possibleGems = list(range(len(GEMIMAGES)))
-                for offsetX, offsetY in ((0, -1), (1, 0), (0, 1), (-1, 0)):
-                    # Narrow down the possible gems we should put in the
-                    # blank space so we don't end up putting an two of
-                    # the same gems next to each other when they drop.
-                    neighborGem = getGemAt(boardCopy, x + offsetX, y + offsetY)
-                    if neighborGem != None and neighborGem in possibleGems:
-                        pass
-                        #possibleGems.remove(neighborGem)
+                if is_first:
+                    for offsetX, offsetY in ((0, -1), (1, 0), (0, 1), (-1, 0)):
+                        # Narrow down the possible gems we should put in the
+                        # blank space so we don't end up putting an two of
+                        # the same gems next to each other when they drop.
+                        neighborGem = getGemAt(boardCopy, x + offsetX, y + offsetY)
+                        if neighborGem != None and neighborGem in possibleGems:
+                            possibleGems.remove(neighborGem)
 
                 newGem = random.choice(possibleGems)
                 boardCopy[x][y] = newGem
@@ -774,7 +773,7 @@ def getDroppingGems(board):
     return droppingGems
 
 
-def animateMovingGems(board, gems, pointsText, score):
+def animateMovingGems(board, gems, pointsText, score, moves):
     # pointsText is a dictionary with keys 'x', 'y', and 'points'
     progress = 0 # progress at 0 represents beginning, 100 means finished.
     while progress < 100: # animation loop
@@ -783,6 +782,7 @@ def animateMovingGems(board, gems, pointsText, score):
         for gem in gems: # Draw each gem.
             drawMovingGem(gem, progress)
         drawScore(score)
+        drawMoves(moves)
         for pointText in pointsText:
             pointsSurf = BASICFONT.render(str(pointText['points']), 1, SCORECOLOR)
             pointsRect = pointsSurf.get_rect()
@@ -815,13 +815,13 @@ def moveGems(board, movingGems):
             board[gem['x']][0] = gem['imageNum'] # move to top row
 
 
-def fillBoardAndAnimate(board, points, score, simulation=True, random_fall=False):
+def fillBoardAndAnimate(board, points, score, moves, simulation=True, random_fall=False, is_first=False):
 
     if simulation and not random_fall:
         pullDownAllGems(board)
         return
 
-    dropSlots = getDropSlots(board, random_fall)
+    dropSlots = getDropSlots(board, simulation, random_fall, is_first)
 
     while dropSlots != ([[]] * BOARDWIDTH):
         # do the dropping animation as long as there are more gems to drop
@@ -833,7 +833,7 @@ def fillBoardAndAnimate(board, points, score, simulation=True, random_fall=False
 
         boardCopy = getBoardCopyMinusGems(board, movingGems)
         if not simulation:
-            animateMovingGems(boardCopy, movingGems, points, score)
+            animateMovingGems(boardCopy, movingGems, points, score, moves)
 
         moveGems(board, movingGems)
 
