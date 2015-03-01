@@ -164,7 +164,6 @@ class Solver(object):
         fringe.append(start_state)
 
         while fringe:
-            print len(fringe)
 
             cur = fringe.pop(0)
 
@@ -242,29 +241,44 @@ class Solver(object):
             return []
 
     def getMoveHeuristic(self, move, w_score=1, w_entropy=0, w_pairs=1, w_nmoves=2, w_depth=20, w_touching=1):
+
         dest_board = move.dest_board
-        nmoves = self.getMoveNumber(dest_board)
-        if nmoves > 25:
-            w_nmoves = 0
-        return w_score * move.score + \
-               w_entropy * 1./self.getEntropy(dest_board) + \
-               w_pairs * self.getPairs(dest_board) + \
-               w_nmoves * nmoves + \
-               w_depth * self.getDepthFactor(move) + \
-               w_touching * self.getTouchingGemsNum(dest_board)
+        source_board = move.source_board
+        cur_nmoves = self.getMoveNumber(source_board)
+
+        h_score = w_score * move.score if w_score else 0
+        h_entropy = w_entropy * (1./self.getEntropy(dest_board)) if w_entropy else 0
+        h_pairs = w_pairs * self.getPairs(dest_board) if w_pairs else 0
+        h_nmoves = w_nmoves * self.getMoveNumber(dest_board) if w_nmoves else 0
+        h_depth = w_depth * self.getDepthFactor(move) if w_depth else 0
+        h_touching = w_touching * self.getTouchingGemsNum(dest_board) if w_touching else 0
+
+        if cur_nmoves > BOARDWIDTH * NUMGEMIMAGES:
+            res = h_depth + h_entropy + h_score
+        else:
+            res = h_score + h_entropy + h_pairs + h_nmoves + h_depth + h_touching
+
+        return res
+
 
     def getStateHeuristic(self, fs, w_score=1, w_entropy=0, w_pairs=0, w_nmoves=2, w_depth=1, w_touching=1):
         dest_board = fs.moves[-1].dest_board
         first_move = fs.moves[0]
-        nmoves = self.getMoveNumber(dest_board)
-        if nmoves > 8:
-            w_nmoves = 0
-        return w_score * fs.getMovesFactor() + \
-               w_entropy * 1./self.getEntropy(dest_board) + \
-               w_pairs * self.getPairs(dest_board) + \
-               w_nmoves * nmoves + \
-               w_depth * self.getDepthFactor(first_move) + \
-               w_touching * self.getTouchingGemsNum(first_move.dest_board)
+        dest_nmoves = self.getMoveNumber(dest_board)
+
+        h_score = w_score * fs.getMovesFactor() if w_score else 0
+        h_entropy = w_entropy * (1./self.getEntropy(dest_board)) if w_entropy else 0
+        h_pairs = w_pairs * self.getPairs(dest_board) if w_pairs else 0
+        h_nmoves = w_nmoves * dest_nmoves if w_nmoves else 0
+        h_depth = w_depth * self.getDepthFactor(first_move) if w_depth else 0
+        h_touching = w_touching * self.getTouchingGemsNum(first_move.dest_board) if w_touching else 0
+
+        if dest_nmoves > NUMGEMIMAGES:
+            res = h_depth + h_entropy + h_score
+        else:
+            res = h_score + h_entropy + h_pairs + h_nmoves + h_depth + h_touching
+        return res
+
 
     #### Heuristics ####
 
@@ -350,6 +364,7 @@ def main(is_manual=False, random_fall=False):
 
     game_solver = Solver(random_fall, LBFS)
     while True:
+        print "NEW GAME!!!!!!"
         runGame(is_manual, game_solver)
 
 
@@ -361,6 +376,7 @@ def runGame(is_manual=False, game_solver=None):
     score = 0
     total_moves = 0
     fillBoardAndAnimate(gameBoard, [], score, simulation=False, random_fall=True) # Drop the initial gems.
+
     # initialize variables for the start of a new game
     firstSelectedGem = None
     lastMouseDownX = None
@@ -371,6 +387,15 @@ def runGame(is_manual=False, game_solver=None):
     swap_list = []
 
     while True: # main game loop
+
+        # Draw the board.
+        DISPLAYSURF.fill(BGCOLOR)
+        drawBoard(gameBoard)
+        if firstSelectedGem != None:
+            highlightSpace(firstSelectedGem['x'], firstSelectedGem['y'])
+
+
+
         do_move = True
         if score >= GOAL_SCORE:
             firstSelectedGem = None
@@ -453,10 +478,11 @@ def runGame(is_manual=False, game_solver=None):
             gameIsOver = True
 
         # Draw the board.
-        DISPLAYSURF.fill(BGCOLOR)
-        drawBoard(gameBoard)
-        if firstSelectedGem != None:
-            highlightSpace(firstSelectedGem['x'], firstSelectedGem['y'])
+        # DISPLAYSURF.fill(BGCOLOR)
+        # drawBoard(gameBoard)
+        # if firstSelectedGem != None:
+        #     highlightSpace(firstSelectedGem['x'], firstSelectedGem['y'])
+
         if gameIsOver:
             if clickContinueTextSurf == None:
                 # Only render the text once. In future iterations, just
@@ -465,6 +491,7 @@ def runGame(is_manual=False, game_solver=None):
                 clickContinueTextRect = clickContinueTextSurf.get_rect()
                 clickContinueTextRect.center = int(WINDOWWIDTH / 2), int(WINDOWHEIGHT / 2)
             DISPLAYSURF.blit(clickContinueTextSurf, clickContinueTextRect)
+            return
 
         drawScore(score)
         drawMoves(total_moves)
@@ -795,6 +822,7 @@ def fillBoardAndAnimate(board, points, score, simulation=True, random_fall=False
         return
 
     dropSlots = getDropSlots(board, random_fall)
+
     while dropSlots != ([[]] * BOARDWIDTH):
         # do the dropping animation as long as there are more gems to drop
         movingGems = getDroppingGems(board)
