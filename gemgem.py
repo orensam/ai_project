@@ -435,7 +435,7 @@ def runGame(is_manual=False, game_solver=None):
 
                 elif event.type == MOUSEBUTTONUP:
                     if gameIsOver:
-                        return # after games ends, click to start a new game
+                        return score, total_moves # after games ends, click to start a new game
 
                     if event.pos == (lastMouseDownX, lastMouseDownY):
                         # This event is a mouse click, not the end of a mouse drag.
@@ -474,18 +474,21 @@ def runGame(is_manual=False, game_solver=None):
         if not canMakeMove(gameBoard):
             gameIsOver = True
 
-        # Draw the board.
-        draw_window(gameBoard, firstSelectedGem, score, total_moves)
-
         if gameIsOver:
-            if clickContinueTextSurf == None:
+            if is_manual:
                 # Only render the text once. In future iterations, just
                 # use the Surface object already in clickContinueTextSurf
                 clickContinueTextSurf = BASICFONT.render('Final Score: %s (Click to continue)' % (score), 1, GAMEOVERCOLOR, GAMEOVERBGCOLOR)
                 clickContinueTextRect = clickContinueTextSurf.get_rect()
                 clickContinueTextRect.center = int(WINDOWWIDTH / 2), int(WINDOWHEIGHT / 2)
-            DISPLAYSURF.blit(clickContinueTextSurf, clickContinueTextRect)
-            return score, total_moves
+                DISPLAYSURF.blit(clickContinueTextSurf, clickContinueTextRect)
+                pygame.display.update()
+                FPSCLOCK.tick(FPS)
+            if not is_manual:
+                return score, total_moves
+        else:
+            # Draw the board.
+            draw_window(gameBoard, firstSelectedGem, score, total_moves)
 
 def draw_window(board, firstSelectedGem, score, moves):
     DISPLAYSURF.fill(BGCOLOR)
