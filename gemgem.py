@@ -149,6 +149,14 @@ class Solver(object):
         self.uncertainty_thres = 0.1
         self.expanded_nodes = 0
 
+        # Heuristics Weights
+        self.w_score = 1
+        self.w_entropy = 0
+        self.w_pairs = 1
+        self.w_nmoves = 2
+        self.w_depth = 20
+        self.w_touching = 1
+
     def getSwaps(self, board, cur_score=0):
         if self.type == GREEDY:
             return self.getSwapGreedy(board)
@@ -240,18 +248,18 @@ class Solver(object):
         else:
             return []
 
-    def getMoveHeuristic(self, move, w_score=1, w_entropy=0, w_pairs=1, w_nmoves=2, w_depth=20, w_touching=1):
+    def getMoveHeuristic(self, move):
 
         dest_board = move.dest_board
         source_board = move.source_board
         cur_nmoves = self.getMoveNumber(source_board)
 
-        h_score = w_score * move.score if w_score else 0
-        h_entropy = w_entropy * (1./self.getEntropy(dest_board)) if w_entropy else 0
-        h_pairs = w_pairs * self.getPairs(dest_board) if w_pairs else 0
-        h_nmoves = w_nmoves * self.getMoveNumber(dest_board) if w_nmoves else 0
-        h_depth = w_depth * self.getDepthFactor(move) if w_depth else 0
-        h_touching = w_touching * self.getTouchingGemsNum(dest_board) if w_touching else 0
+        h_score = self.w_score * move.score if self.w_score else 0
+        h_entropy = self.w_entropy * (1./self.getEntropy(dest_board)) if self.w_entropy else 0
+        h_pairs = self.w_pairs * self.getPairs(dest_board) if self.w_pairs else 0
+        h_nmoves = self.w_nmoves * self.getMoveNumber(dest_board) if self.w_nmoves else 0
+        h_depth = self.w_depth * self.getDepthFactor(move) if self.w_depth else 0
+        h_touching = self.w_touching * self.getTouchingGemsNum(dest_board) if self.w_touching else 0
 
         if cur_nmoves > BOARDWIDTH * NUMGEMIMAGES:
             res = h_depth + h_entropy + h_score
@@ -261,17 +269,17 @@ class Solver(object):
         return res
 
 
-    def getStateHeuristic(self, fs, w_score=1, w_entropy=0, w_pairs=0, w_nmoves=2, w_depth=1, w_touching=1):
+    def getStateHeuristic(self, fs):
         dest_board = fs.moves[-1].dest_board
         first_move = fs.moves[0]
         dest_nmoves = self.getMoveNumber(dest_board)
 
-        h_score = w_score * fs.getMovesFactor() if w_score else 0
-        h_entropy = w_entropy * (1./self.getEntropy(dest_board)) if w_entropy else 0
-        h_pairs = w_pairs * self.getPairs(dest_board) if w_pairs else 0
-        h_nmoves = w_nmoves * dest_nmoves if w_nmoves else 0
-        h_depth = w_depth * self.getDepthFactor(first_move) if w_depth else 0
-        h_touching = w_touching * self.getTouchingGemsNum(first_move.dest_board) if w_touching else 0
+        h_score = self.w_score * fs.getMovesFactor() if self.w_score else 0
+        h_entropy = self.w_entropy * (1./self.getEntropy(dest_board)) if self.w_entropy else 0
+        h_pairs = self.w_pairs * self.getPairs(dest_board) if self.w_pairs else 0
+        h_nmoves = self.w_nmoves * dest_nmoves if self.w_nmoves else 0
+        h_depth = self.w_depth * self.getDepthFactor(first_move) if self.w_depth else 0
+        h_touching = self.w_touching * self.getTouchingGemsNum(first_move.dest_board) if self.w_touching else 0
 
         if dest_nmoves > NUMGEMIMAGES:
             res = h_depth + h_entropy + h_score
@@ -324,7 +332,7 @@ class Solver(object):
         return res
 
 
-def main(is_manual=False, random_fall=False):
+def main(is_manual, random_fall, ngames, logfile):
 
     global FPSCLOCK, DISPLAYSURF, GEMIMAGES, GAMESOUNDS, BASICFONT, BOARDRECTS
 
@@ -363,10 +371,48 @@ def main(is_manual=False, random_fall=False):
             BOARDRECTS[x].append(r)
 
     game_solver = Solver(random_fall, LBFS)
-    while True:
-        print "New game started"
-        score, moves = runGame(is_manual, game_solver)
-        print "Game ended: %d points in %d moves" %(score, moves)
+
+
+    if ngames == 0:
+        ngames = float('inf')
+    game_counter = 1
+
+    log_header = ','.join(["%s"] * 11)
+    log_header = log_header %('board_size', 'gem_number',
+                              'w_score', 'w_entropy', 'w_pairs',
+                              'w_nmoves', 'w_depth', 'w_touching',
+                              'goal_score', 'swaps', 'score')
+
+
+                 # %(BOARDWIDTH, NUMGEMIMAGES,
+                 #   game_solver.w_score, game_solver.w_entropy, game_solver.w_pairs,
+                 #   game_solver.w_nmoves, game_solver.w_depth, game_solver.w_touching,
+                 #   GOAL_SCORE)
+
+    file_obj = open(logfile, 'a')
+    file_obj.write(log_header + '\n')
+
+    while game_counter <= ngames:
+        try:
+            print "Game %d started" %game_counter
+            score, moves = runGame(is_manual, game_solver)
+            log(file_obj, score, moves, game_solver)
+            print "Game %d ended: %d points in %d moves" %(game_counter, score, moves)
+            print
+            game_counter += 1
+        except KeyboardInterrupt:
+            file_obj.close()
+
+    print "Finished %d games" %ngames
+    file_obj.close()
+
+def log(file_obj, score, moves, solver):
+    line = "%d,%d,%.1f,%.1f,%.1f,%.1f,%.1f,%.1f,%d,%d,%d" \
+            %(BOARDWIDTH, NUMGEMIMAGES,
+              solver.w_score, solver.w_entropy, solver.w_pairs,
+              solver.w_nmoves, solver.w_depth, solver.w_touching,
+              GOAL_SCORE, moves, score)
+    file_obj.write(line + '\n')
 
 
 def runGame(is_manual=False, game_solver=None):
@@ -927,6 +973,12 @@ if __name__ == '__main__':
     parser.add_option("-f", "--fps",
                       type="int", dest="USER_FPS", default=30,
                       help="Game animation FPS")
+    parser.add_option("-n", "--ngames",
+                      type="int", dest="NGAMES", default=0,
+                      help="Game animation FPS")
+    parser.add_option("-O", "--output",
+                      type="string", dest="LOGFILE", default="gemgem_log.csv",
+                      help="Game animation FPS")
 
     (options, args) = parser.parse_args()
 
@@ -935,4 +987,4 @@ if __name__ == '__main__':
     GOAL_SCORE = options.GOAL
     FPS = options.USER_FPS
 
-    main(options.IS_MANUAL, options.RANDOM_FALL)
+    main(options.IS_MANUAL, options.RANDOM_FALL, options.NGAMES, options.LOGFILE)
