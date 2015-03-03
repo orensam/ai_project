@@ -159,7 +159,6 @@ class Solver(object):
         self.expanded_nodes = 0
 
         # Heuristics Weights
-        self.w_entropy = 0
         self.w_score = weights[0]
         self.w_pairs = weights[1]
         self.w_nmoves = weights[2]
@@ -167,7 +166,6 @@ class Solver(object):
         self.w_touching = weights[4]
 
         self.h_score_list = []
-        self.h_entropy_list = []
         self.h_pairs_list = []
         self.h_nmoves_list = []
         self.h_depth_list = []
@@ -302,23 +300,18 @@ class Solver(object):
         cur_nmoves = self.getMoveNumber(source_board)
 
         h_score = self.w_score * move.score if self.w_score else 0
-        h_entropy = self.w_entropy * (1./self.getEntropy(dest_board)) if self.w_entropy else 0
         h_pairs = self.w_pairs * self.getPairs(dest_board) if self.w_pairs else 0
         h_nmoves = self.w_nmoves * self.getMoveNumber(dest_board) if self.w_nmoves else 0
         h_depth = self.w_depth * self.getDepthFactor(move) if self.w_depth else 0
         h_touching = self.w_touching * self.getTouchingGemsNum(dest_board) if self.w_touching else 0
 
         self.h_score_list.append(h_score)
-        self.h_entropy_list.append(h_entropy)
         self.h_pairs_list.append(h_pairs)
         self.h_nmoves_list.append(h_nmoves)
         self.h_depth_list.append(h_depth)
         self.h_touching_list.append(h_touching)
 
-        if cur_nmoves > BOARDWIDTH * NUMGEMIMAGES:
-            res = h_depth + h_entropy + h_score
-        else:
-            res = h_score + h_entropy + h_pairs + h_nmoves + h_depth + h_touching
+        res = h_score + h_pairs + h_nmoves + h_depth + h_touching
 
         return res
 
@@ -333,23 +326,18 @@ class Solver(object):
         dest_nmoves = self.getMoveNumber(dest_board)
 
         h_score = self.w_score * fs.getMovesFactor() if self.w_score else 0
-        h_entropy = self.w_entropy * (1./self.getEntropy(dest_board)) if self.w_entropy else 0
         h_pairs = self.w_pairs * self.getPairs(dest_board) if self.w_pairs else 0
         h_nmoves = self.w_nmoves * dest_nmoves if self.w_nmoves else 0
         h_depth = self.w_depth * self.getDepthFactor(first_move) if self.w_depth else 0
         h_touching = self.w_touching * self.getTouchingGemsNum(first_move.dest_board) if self.w_touching else 0
 
         self.h_score_list.append(h_score)
-        self.h_entropy_list.append(h_entropy)
         self.h_pairs_list.append(h_pairs)
         self.h_nmoves_list.append(h_nmoves)
         self.h_depth_list.append(h_depth)
         self.h_touching_list.append(h_touching)
 
-        if dest_nmoves > NUMGEMIMAGES:
-            res = h_depth + h_entropy + h_score
-        else:
-            res = h_score + h_entropy + h_pairs + h_nmoves + h_depth + h_touching
+        res = h_score + h_pairs + h_nmoves + h_depth + h_touching
         return res
 
 
@@ -448,9 +436,9 @@ def main(is_manual, random_fall, ngames, algo, weights, no_graphics, logfile):
     game_counter = 1
 
     log_header = ','.join(['board_size', 'gem_number',
-                           'w_score', 'w_entropy', 'w_pairs',
+                           'w_score', 'w_pairs',
                            'w_nmoves', 'w_depth', 'w_touching',
-                           'avg_h_score', 'avg_h_entropy', 'avg_h_pairs',
+                           'avg_h_score', 'avg_h_pairs',
                            'avg_h_nmoves', 'avg_h_depth', 'avg_h_touching',
                            'goal_score', 'swaps', 'score', 'status', 'algorithm'])
 
@@ -466,7 +454,7 @@ def main(is_manual, random_fall, ngames, algo, weights, no_graphics, logfile):
             end = datetime.datetime.now()
             diff = end - start
             log(file_obj, score, moves, game_solver)
-            print "Game %d. ended: %d points in %d moves" %(game_counter, score, moves)
+            print "Game %d ended: %d points in %d moves" %(game_counter, score, moves)
             print "Game took %.2f seconds" % diff.total_seconds()
             if score >= GOAL_SCORE:
                 times.append(diff.total_seconds())
@@ -485,13 +473,13 @@ def mean(lst):
 
 def log(file_obj, score, moves, solver):
     status = "win" if score >= GOAL_SCORE else "lose"
-    line = "%d,%d,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%d,%d,%d,%s,%s" \
+    line = "%d,%d,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%d,%d,%d,%s,%s" \
             %(BOARDWIDTH, NUMGEMIMAGES,
 
-              solver.w_score, solver.w_entropy, solver.w_pairs,
+              solver.w_score, solver.w_pairs,
               solver.w_nmoves, solver.w_depth, solver.w_touching,
 
-              mean(solver.h_score_list), mean(solver.h_entropy_list), mean(solver.h_pairs_list),
+              mean(solver.h_score_list), mean(solver.h_pairs_list),
               mean(solver.h_nmoves_list), mean(solver.h_depth_list), mean(solver.h_touching_list),
 
               GOAL_SCORE, moves, score, status, solver.type)
