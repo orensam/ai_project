@@ -235,14 +235,14 @@ class Solver(object):
 
         if moves:
             best = max(moves, key=lambda m: self.getMoveHeuristic(m))
-            print
-            print "MOVES:"
-            for move in moves:
-                print move
-            print
-            print "BEST:"
-            print best
-            print
+            # print
+            # print "MOVES:"
+            # for move in moves:
+            #     print move
+            # print
+            # print "BEST:"
+            # print best
+            # print
             #import pdb; pdb.set_trace()
             return [best]
         else:
@@ -383,13 +383,7 @@ def main(is_manual, random_fall, ngames, logfile):
                               'w_nmoves', 'w_depth', 'w_touching',
                               'goal_score', 'swaps', 'score')
 
-
-                 # %(BOARDWIDTH, NUMGEMIMAGES,
-                 #   game_solver.w_score, game_solver.w_entropy, game_solver.w_pairs,
-                 #   game_solver.w_nmoves, game_solver.w_depth, game_solver.w_touching,
-                 #   GOAL_SCORE)
-
-    file_obj = open(logfile, 'a')
+    file_obj = open(logfile, 'w')
     file_obj.write(log_header + '\n')
 
     while game_counter <= ngames:
