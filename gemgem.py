@@ -70,7 +70,8 @@ RIGHT = 'right'
 EMPTY_SPACE = -1 # an arbitrary, nonpositive value
 ROWABOVEBOARD = 'row above board' # an arbitrary, noninteger value
 
-GREEDY = 'greedy'
+SMART_GREEDY = 'smart_greedy'
+STUPID_GREEDY = 'stupid_greedy'
 LBFS = 'lbfs'
 GOAL_SCORE = 100
 SEND_MULTIPLE = False
@@ -78,10 +79,11 @@ SEND_MULTIPLE = False
 
 class BoardMove(object):
 
-    def __init__(self, source_board, x, y, direction, random_fall):
+    def __init__(self, source_board, x, y, direction, random_fall, cascade):
         self.first = self.second = self.dest_board = None
         self.score = 0
         self.random_fall = random_fall
+        self.cascade = cascade
         self.source_board = copy.deepcopy(source_board)
         self.create_dicts(x, y, direction)
         if self.second is not None:
@@ -100,8 +102,12 @@ class BoardMove(object):
             self.second = {'x':x, 'y':y+1, 'imageNum': gem_down, 'direction':UP}
 
     def perform_move(self):
-        self.dest_board, self.score = perform_move(copy.deepcopy(self.source_board), self.first, self.second,
-                                                   score=0, simulation=True, random_fall=self.random_fall)
+        if self.cascade:
+            self.dest_board, self.score = perform_move(copy.deepcopy(self.source_board), self.first, self.second,
+                                                       score=0, simulation=True, random_fall=self.random_fall)
+        else:
+            self.dest_board, self.score = perform_single_move(copy.deepcopy(self.source_board), self.first, self.second,
+                                                              score=0, simulation=True, random_fall=self.random_fall)
 
     def __str__(self):
         return "MOVE: (x, y): (%d, %d); Direction %s; Score: %d" %(self.first['x'], self.first['y'],
@@ -158,8 +164,13 @@ class Solver(object):
         self.w_touching = 1
 
     def getSwaps(self, board, cur_score=0):
-        if self.type == GREEDY:
-            return self.getSwapGreedy(board)
+
+        if self.type == STUPID_GREEDY:
+            return self.getSwapStupidGreedy(board)
+
+        elif self.type == SMART_GREEDY:
+            return self.getSwapSmartGreedy(board)
+
         elif self.type == LBFS:
             return self.getSwapsLBFS(board, cur_score)
 
@@ -215,25 +226,41 @@ class Solver(object):
             return True
         return False
 
-    def getPossibleMoves(self, board):
+    def getPossibleMoves(self, board, cascade):
         moves = []
         for y in range(BOARDHEIGHT):
             for x in range(BOARDWIDTH):
-
-                move_right = BoardMove(copy.deepcopy(board), x, y, RIGHT, self.random_fall)
-                move_down = BoardMove(copy.deepcopy(board), x, y, DOWN, self.random_fall)
-
+                move_right = BoardMove(copy.deepcopy(board), x, y, RIGHT, self.random_fall, cascade)
+                move_down = BoardMove(copy.deepcopy(board), x, y, DOWN, self.random_fall, cascade)
                 for move in (move_right, move_down):
                     if move.score > 0:
                         moves.append(move)
-
         return moves
 
-    def getSwapGreedy(self, board):
+    def getSwapStupidGreedy(self, board):
+        moves = self.getPossibleMoves(board, cascade=False)
+        if moves:
+            random.shuffle(moves)
+            best = max(moves)
+            # print
+            # print "MOVES:"
+            # for move in moves:
+            #     print move
+            # print
+            # print "BEST:"
+            # print best
+            # print
+            # import pdb; pdb.set_trace()
+            return [best]
+        else:
+            return []
 
-        moves = self.getPossibleMoves(board)
+    def getSwapSmartGreedy(self, board):
+
+        moves = self.getPossibleMoves(board, cascade=True)
 
         if moves:
+            random.shuffle(moves)
             best = max(moves, key=lambda m: self.getMoveHeuristic(m))
             # print
             # print "MOVES:"
@@ -327,7 +354,7 @@ class Solver(object):
         return entropy
 
     def getMoveNumber(self, board):
-        res = len(self.getPossibleMoves(board))
+        res = len(self.getPossibleMoves(board, False))
         #print "Num of moves:  %d " %res
         return res
 
@@ -370,7 +397,7 @@ def main(is_manual, random_fall, ngames, logfile):
                              GEMIMAGESIZE))
             BOARDRECTS[x].append(r)
 
-    game_solver = Solver(random_fall, LBFS)
+    game_solver = Solver(random_fall, STUPID_GREEDY)
 
 
     if ngames == 0:
@@ -396,8 +423,9 @@ def main(is_manual, random_fall, ngames, logfile):
             game_counter += 1
         except KeyboardInterrupt:
             file_obj.close()
+            break
 
-    print "Finished %d games" %ngames
+    print "Finished %d games" %game_counter
     file_obj.close()
 
 def log(file_obj, score, moves, solver):
@@ -443,10 +471,10 @@ def runGame(is_manual=False, game_solver=None):
                 swap_list = game_solver.getSwaps(copy.deepcopy(gameBoard), score)
                 #print "END SOLVER"
 
-                # print "Retrieving new swap list:"
+                # print "Swap list:"
                 # for move in swap_list: print move
                 # print
-                # import pdb; pdb.set_trace()
+                #import pdb; pdb.set_trace()
 
             if not swap_list:
                 firstSelectedGem = None
@@ -539,6 +567,27 @@ def draw_window(board, firstSelectedGem, score, moves):
     drawMoves(moves)
     pygame.display.update()
     FPSCLOCK.tick(FPS)
+
+def perform_single_move(gameBoard, firstSwappingGem, secondSwappingGem, score=0, moves=0, simulation=True, random_fall=False):
+    boardCopy = getBoardCopyMinusGems(gameBoard, (firstSwappingGem, secondSwappingGem))
+    gameBoard[firstSwappingGem['x']][firstSwappingGem['y']] = secondSwappingGem['imageNum']
+    gameBoard[secondSwappingGem['x']][secondSwappingGem['y']] = firstSwappingGem['imageNum']
+
+    # See if this is a matching move.
+    matchedGems = findMatchingGems(gameBoard)
+    if not matchedGems:
+        gameBoard[firstSwappingGem['x']][firstSwappingGem['y']] = firstSwappingGem['imageNum']
+        gameBoard[secondSwappingGem['x']][secondSwappingGem['y']] = secondSwappingGem['imageNum']
+    else:
+        scoreAdd = len(matchedGems)
+        refGem = list(matchedGems)[0]
+        for gem in matchedGems:
+            gameBoard[gem[0]][gem[1]] = EMPTY_SPACE
+        score += scoreAdd
+        # Drop the new gems.
+        fillBoardAndAnimate(gameBoard, [], score, moves, simulation, random_fall)
+    return gameBoard, score
+
 
 def perform_move(gameBoard, firstSwappingGem, secondSwappingGem, score=0, moves=0, simulation=True, random_fall=False):
     # Show the swap animation on the screen.
