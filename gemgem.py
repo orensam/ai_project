@@ -74,6 +74,8 @@ ROWABOVEBOARD = 'row above board' # an arbitrary, noninteger value
 SMART_GREEDY = 'smart_greedy'
 STUPID_GREEDY = 'stupid_greedy'
 LBFS = 'lbfs'
+ALGOS = {1:STUPID_GREEDY, 2:SMART_GREEDY, 3:LBFS}
+
 GOAL_SCORE = 100
 SEND_MULTIPLE = False
 
@@ -150,19 +152,19 @@ class FringeState(object):
 
 class Solver(object):
 
-    def __init__(self, random_fall, solver_type):
+    def __init__(self, random_fall, solver_type, weights):
         self.random_fall = random_fall
         self.type = solver_type
         self.uncertainty_thres = 0.1
         self.expanded_nodes = 0
 
         # Heuristics Weights
-        self.w_score = 1
-        self.w_entropy = 1
-        self.w_pairs = 1
-        self.w_nmoves = 20
-        self.w_depth = 1
-        self.w_touching = 1
+        self.w_entropy = 0
+        self.w_score = weights[0]
+        self.w_pairs = weights[1]
+        self.w_nmoves = weights[2]
+        self.w_depth = weights[3]
+        self.w_touching = weights[4]
 
         self.h_score_list = []
         self.h_entropy_list = []
@@ -268,9 +270,18 @@ class Solver(object):
 
         moves = self.getPossibleMoves(board, cascade=True)
 
+        # if len(moves) >= 15:
+        #     print "Breaking!!!!"
+        #     random.shuffle(moves)
+        #     best = max(moves, key=lambda m: m.score)
+        #     return [best]
+
         if moves:
             random.shuffle(moves)
             best = max(moves, key=lambda m: self.getMoveHeuristic(m))
+
+            # h_nmoves = self.w_nmoves * self.getMoveNumber(best.dest_board) if self.w_nmoves else 0
+            # print "Best nmoves: %d" %h_nmoves
             # print
             # print "MOVES:"
             # for move in moves:
@@ -296,7 +307,6 @@ class Solver(object):
         h_nmoves = self.w_nmoves * self.getMoveNumber(dest_board) if self.w_nmoves else 0
         h_depth = self.w_depth * self.getDepthFactor(move) if self.w_depth else 0
         h_touching = self.w_touching * self.getTouchingGemsNum(dest_board) if self.w_touching else 0
-
 
         self.h_score_list.append(h_score)
         self.h_entropy_list.append(h_entropy)
@@ -387,7 +397,13 @@ class Solver(object):
         return res
 
 
-def main(is_manual, random_fall, ngames, no_graphics, logfile):
+def main(is_manual, random_fall, ngames, algo, weights, no_graphics, logfile):
+
+    print
+    print "Running %d games in %s mode" %(ngames, 'manual' if is_manual else 'auto')
+    if not is_manual:
+        print "Using solver algorithm: %s" %algo
+    print
 
     global FPSCLOCK, DISPLAYSURF, GEMIMAGES, GAMESOUNDS, BASICFONT, BOARDRECTS
 
@@ -425,20 +441,18 @@ def main(is_manual, random_fall, ngames, no_graphics, logfile):
                              GEMIMAGESIZE))
             BOARDRECTS[x].append(r)
 
-    game_solver = Solver(random_fall, LBFS)
-
+    game_solver = Solver(random_fall, algo, weights)
 
     if ngames == 0:
         ngames = float('inf')
     game_counter = 1
 
-    log_header = ','.join(["%s"] * 18)
-    log_header = log_header %('board_size', 'gem_number',
-                              'w_score', 'w_entropy', 'w_pairs',
-                              'w_nmoves', 'w_depth', 'w_touching',
-                              'avg_h_score', 'avg_h_entropy', 'avg_h_pairs',
-                              'avg_h_nmoves', 'avg_h_depth', 'avg_h_touching',
-                              'goal_score', 'swaps', 'score', 'status')
+    log_header = ','.join(['board_size', 'gem_number',
+                           'w_score', 'w_entropy', 'w_pairs',
+                           'w_nmoves', 'w_depth', 'w_touching',
+                           'avg_h_score', 'avg_h_entropy', 'avg_h_pairs',
+                           'avg_h_nmoves', 'avg_h_depth', 'avg_h_touching',
+                           'goal_score', 'swaps', 'score', 'status', 'algorithm'])
 
     file_obj = open(logfile, 'w')
     file_obj.write(log_header + '\n')
@@ -471,7 +485,7 @@ def mean(lst):
 
 def log(file_obj, score, moves, solver):
     status = "win" if score >= GOAL_SCORE else "lose"
-    line = "%d,%d,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%d,%d,%d,%s" \
+    line = "%d,%d,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%d,%d,%d,%s,%s" \
             %(BOARDWIDTH, NUMGEMIMAGES,
 
               solver.w_score, solver.w_entropy, solver.w_pairs,
@@ -480,7 +494,7 @@ def log(file_obj, score, moves, solver):
               mean(solver.h_score_list), mean(solver.h_entropy_list), mean(solver.h_pairs_list),
               mean(solver.h_nmoves_list), mean(solver.h_depth_list), mean(solver.h_touching_list),
 
-              GOAL_SCORE, moves, score, status)
+              GOAL_SCORE, moves, score, status, solver.type)
 
     file_obj.write(line + '\n')
 
@@ -1072,6 +1086,12 @@ if __name__ == '__main__':
     parser.add_option("-q", "--no-graphics",
                       action="store_true", dest="NO_GRAPHICS", default=False,
                       help="Run game without graphics")
+    parser.add_option("-a", "--algorithm",
+                      type="int", dest="ALGO", default=1,
+                      help="Algorithm: 1=Stupid Greedy, 2=Smart Greedy, 3=LBFS")
+    parser.add_option("-w", "--weights",
+                      type="string", dest="WEIGHTS", default="1 1 1 1 1",
+                      help="Weights: Score, Pairs, Moves, Depth, Touching")
 
     (options, args) = parser.parse_args()
 
@@ -1079,5 +1099,6 @@ if __name__ == '__main__':
     NUMGEMIMAGES = options.GEM_NUM
     GOAL_SCORE = options.GOAL
     FPS = options.USER_FPS
+    weights = [int(x) for x in options.WEIGHTS.split()]
 
-    main(options.IS_MANUAL, options.RANDOM_FALL, options.NGAMES, options.NO_GRAPHICS, options.LOGFILE)
+    main(options.IS_MANUAL, options.RANDOM_FALL, options.NGAMES, ALGOS[options.ALGO], weights, options.NO_GRAPHICS, options.LOGFILE)
