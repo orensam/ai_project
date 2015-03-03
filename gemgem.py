@@ -19,6 +19,7 @@ import random, time, pygame, sys, copy
 from pygame.locals import *
 from optparse import OptionParser
 import math
+import datetime
 
 FPS = 20000 # frames per second to update the screen
 WINDOWWIDTH = 600  # width of the program's window, in pixels
@@ -198,8 +199,8 @@ class Solver(object):
                 continue
             visited.add(board_tuple)
 
-            possible_moves = self.getPossibleMoves(cur.board)
-            is_uncertain = self.isUncertain(cur.board)
+            possible_moves = self.getPossibleMoves(cur.board, True)
+            is_uncertain = self.isUncertain(cur)
             if not possible_moves or is_uncertain:
                 leaves.append(cur)
                 continue
@@ -226,9 +227,10 @@ class Solver(object):
     def isGoal(self, fringe_state):
         return fringe_state.total_score >= GOAL_SCORE
 
-    def isUncertain(self, board):
+    def isUncertain(self, fs):
         #import pdb; pdb.set_trace()
-        uncertainty = reduce(lambda s1, s2: s1 + s2, board).count(-1) / float((BOARDHEIGHT * BOARDWIDTH))
+        #uncertainty = reduce(lambda s1, s2: s1 + s2, board).count(-1) / float((BOARDHEIGHT * BOARDWIDTH))
+        uncertainty = sum([m.score for m in fs.moves]) / float((BOARDHEIGHT * BOARDWIDTH))
         if uncertainty > self.uncertainty_thres:
             return True
         return False
@@ -277,7 +279,7 @@ class Solver(object):
             # print "BEST:"
             # print best
             # print
-            #import pdb; pdb.set_trace()
+            # import pdb; pdb.set_trace()
             return [best]
         else:
             return []
@@ -312,6 +314,10 @@ class Solver(object):
 
 
     def getStateHeuristic(self, fs):
+
+        if not fs.moves:
+            return 0
+
         dest_board = fs.moves[-1].dest_board
         first_move = fs.moves[0]
         dest_nmoves = self.getMoveNumber(dest_board)
@@ -381,7 +387,7 @@ class Solver(object):
         return res
 
 
-def main(is_manual, random_fall, ngames, logfile):
+def main(is_manual, random_fall, ngames, no_graphics, logfile):
 
     global FPSCLOCK, DISPLAYSURF, GEMIMAGES, GAMESOUNDS, BASICFONT, BOARDRECTS
 
@@ -419,14 +425,14 @@ def main(is_manual, random_fall, ngames, logfile):
                              GEMIMAGESIZE))
             BOARDRECTS[x].append(r)
 
-    game_solver = Solver(random_fall, SMART_GREEDY)
+    game_solver = Solver(random_fall, LBFS)
 
 
     if ngames == 0:
         ngames = float('inf')
     game_counter = 1
 
-    log_header = ','.join(["%s"] * 17)
+    log_header = ','.join(["%s"] * 18)
     log_header = log_header %('board_size', 'gem_number',
                               'w_score', 'w_entropy', 'w_pairs',
                               'w_nmoves', 'w_depth', 'w_touching',
@@ -437,19 +443,27 @@ def main(is_manual, random_fall, ngames, logfile):
     file_obj = open(logfile, 'w')
     file_obj.write(log_header + '\n')
 
+    times = []
     while game_counter <= ngames:
         try:
             print "Game %d started" %game_counter
-            score, moves = runGame(is_manual, game_solver)
+            start = datetime.datetime.now()
+            score, moves = runGame(is_manual, game_solver, no_graphics)
+            end = datetime.datetime.now()
+            diff = end - start
             log(file_obj, score, moves, game_solver)
-            print "Game %d ended: %d points in %d moves" %(game_counter, score, moves)
+            print "Game %d. ended: %d points in %d moves" %(game_counter, score, moves)
+            print "Game took %.2f seconds" % diff.total_seconds()
+            if score >= GOAL_SCORE:
+                times.append(diff.total_seconds())
             print
             game_counter += 1
         except KeyboardInterrupt:
             file_obj.close()
             break
 
-    print "Finished %d games" %(game_counter-1)
+    print "Finished %d games." %(game_counter-1)
+    print "Average time per finished game: %.2f seconds" %mean(times)
     file_obj.close()
 
 def mean(lst):
@@ -471,16 +485,16 @@ def log(file_obj, score, moves, solver):
     file_obj.write(line + '\n')
 
 
-def runGame(is_manual=False, game_solver=None):
+def runGame(is_manual=False, game_solver=None, no_graphics=False):
     # Plays through a single game. When the game is over, this function returns.
 
     # initalize the board
     gameBoard = getBlankBoard()
     score = 0
     total_moves = 0
-    fillBoardAndAnimate(gameBoard, [], score, total_moves, simulation=False, random_fall=False, is_first=True) # Drop the initial gems.
+    fillBoardAndAnimate(gameBoard, [], score, total_moves, simulation=no_graphics, random_fall=True, is_first=True) # Drop the initial gems.
     # Draw the board.
-    draw_window(gameBoard, None, score, total_moves)
+    draw_window(gameBoard, None, score, total_moves, simulation=no_graphics)
 
     # initialize variables for the start of a new game
     firstSelectedGem = None
@@ -514,8 +528,8 @@ def runGame(is_manual=False, game_solver=None):
                 firstSelectedGem = None
                 clickedSpace = None
                 gameIsOver = True
-                print "** Total moves: %d" %total_moves
-                print '** Total Number Of Nodes Expanded:' , game_solver.expanded_nodes , ' **'
+                # print "** Total moves: %d" %total_moves
+                # print '** Total Number Of Nodes Expanded:' , game_solver.expanded_nodes , ' **'
             else:
                 move = swap_list.pop(0)
                 firstSelectedGem = move.first
@@ -568,7 +582,7 @@ def runGame(is_manual=False, game_solver=None):
                 continue
 
             new_board, score = perform_move(gameBoard, firstSwappingGem, secondSwappingGem,
-                                            score, total_moves, simulation=False, random_fall=True)
+                                            score, total_moves, simulation=no_graphics, random_fall=True)
 
             total_moves += 1
             firstSelectedGem = None
@@ -590,9 +604,11 @@ def runGame(is_manual=False, game_solver=None):
                 return score, total_moves
         else:
             # Draw the board.
-            draw_window(gameBoard, firstSelectedGem, score, total_moves)
+            draw_window(gameBoard, firstSelectedGem, score, total_moves, simulation=no_graphics)
 
-def draw_window(board, firstSelectedGem, score, moves):
+def draw_window(board, firstSelectedGem, score, moves, simulation=True):
+    if simulation:
+        return
     DISPLAYSURF.fill(BGCOLOR)
     drawBoard(board)
     if firstSelectedGem != None:
@@ -1002,10 +1018,7 @@ def getBoardCopyMinusGems(board, gems):
 
     for gem in gems:
         if gem['y'] != ROWABOVEBOARD:
-            try:
-                boardCopy[gem['x']][gem['y']] = EMPTY_SPACE
-            except:
-                import pdb; pdb.set_trace()
+            boardCopy[gem['x']][gem['y']] = EMPTY_SPACE
 
     return boardCopy
 
@@ -1056,6 +1069,9 @@ if __name__ == '__main__':
     parser.add_option("-O", "--output",
                       type="string", dest="LOGFILE", default="gemgem_log.csv",
                       help="Log file name")
+    parser.add_option("-q", "--no-graphics",
+                      action="store_true", dest="NO_GRAPHICS", default=False,
+                      help="Run game without graphics")
 
     (options, args) = parser.parse_args()
 
@@ -1064,4 +1080,4 @@ if __name__ == '__main__':
     GOAL_SCORE = options.GOAL
     FPS = options.USER_FPS
 
-    main(options.IS_MANUAL, options.RANDOM_FALL, options.NGAMES, options.LOGFILE)
+    main(options.IS_MANUAL, options.RANDOM_FALL, options.NGAMES, options.NO_GRAPHICS, options.LOGFILE)
