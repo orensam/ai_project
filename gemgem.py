@@ -157,11 +157,18 @@ class Solver(object):
 
         # Heuristics Weights
         self.w_score = 1
-        self.w_entropy = 0
+        self.w_entropy = 1
         self.w_pairs = 1
-        self.w_nmoves = 2
-        self.w_depth = 20
+        self.w_nmoves = 20
+        self.w_depth = 1
         self.w_touching = 1
+
+        self.h_score_list = []
+        self.h_entropy_list = []
+        self.h_pairs_list = []
+        self.h_nmoves_list = []
+        self.h_depth_list = []
+        self.h_touching_list = []
 
     def getSwaps(self, board, cur_score=0):
 
@@ -288,6 +295,14 @@ class Solver(object):
         h_depth = self.w_depth * self.getDepthFactor(move) if self.w_depth else 0
         h_touching = self.w_touching * self.getTouchingGemsNum(dest_board) if self.w_touching else 0
 
+
+        self.h_score_list.append(h_score)
+        self.h_entropy_list.append(h_entropy)
+        self.h_pairs_list.append(h_pairs)
+        self.h_nmoves_list.append(h_nmoves)
+        self.h_depth_list.append(h_depth)
+        self.h_touching_list.append(h_touching)
+
         if cur_nmoves > BOARDWIDTH * NUMGEMIMAGES:
             res = h_depth + h_entropy + h_score
         else:
@@ -307,6 +322,13 @@ class Solver(object):
         h_nmoves = self.w_nmoves * dest_nmoves if self.w_nmoves else 0
         h_depth = self.w_depth * self.getDepthFactor(first_move) if self.w_depth else 0
         h_touching = self.w_touching * self.getTouchingGemsNum(first_move.dest_board) if self.w_touching else 0
+
+        self.h_score_list.append(h_score)
+        self.h_entropy_list.append(h_entropy)
+        self.h_pairs_list.append(h_pairs)
+        self.h_nmoves_list.append(h_nmoves)
+        self.h_depth_list.append(h_depth)
+        self.h_touching_list.append(h_touching)
 
         if dest_nmoves > NUMGEMIMAGES:
             res = h_depth + h_entropy + h_score
@@ -397,18 +419,20 @@ def main(is_manual, random_fall, ngames, logfile):
                              GEMIMAGESIZE))
             BOARDRECTS[x].append(r)
 
-    game_solver = Solver(random_fall, STUPID_GREEDY)
+    game_solver = Solver(random_fall, SMART_GREEDY)
 
 
     if ngames == 0:
         ngames = float('inf')
     game_counter = 1
 
-    log_header = ','.join(["%s"] * 11)
+    log_header = ','.join(["%s"] * 17)
     log_header = log_header %('board_size', 'gem_number',
                               'w_score', 'w_entropy', 'w_pairs',
                               'w_nmoves', 'w_depth', 'w_touching',
-                              'goal_score', 'swaps', 'score')
+                              'avg_h_score', 'avg_h_entropy', 'avg_h_pairs',
+                              'avg_h_nmoves', 'avg_h_depth', 'avg_h_touching',
+                              'goal_score', 'swaps', 'score', 'status')
 
     file_obj = open(logfile, 'w')
     file_obj.write(log_header + '\n')
@@ -425,15 +449,25 @@ def main(is_manual, random_fall, ngames, logfile):
             file_obj.close()
             break
 
-    print "Finished %d games" %game_counter
+    print "Finished %d games" %(game_counter-1)
     file_obj.close()
 
+def mean(lst):
+    return sum(lst) / float(len(lst)) if lst else 0
+
 def log(file_obj, score, moves, solver):
-    line = "%d,%d,%.1f,%.1f,%.1f,%.1f,%.1f,%.1f,%d,%d,%d" \
+    status = "win" if score >= GOAL_SCORE else "lose"
+    line = "%d,%d,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%d,%d,%d,%s" \
             %(BOARDWIDTH, NUMGEMIMAGES,
+
               solver.w_score, solver.w_entropy, solver.w_pairs,
               solver.w_nmoves, solver.w_depth, solver.w_touching,
-              GOAL_SCORE, moves, score)
+
+              mean(solver.h_score_list), mean(solver.h_entropy_list), mean(solver.h_pairs_list),
+              mean(solver.h_nmoves_list), mean(solver.h_depth_list), mean(solver.h_touching_list),
+
+              GOAL_SCORE, moves, score, status)
+
     file_obj.write(line + '\n')
 
 
@@ -1018,10 +1052,10 @@ if __name__ == '__main__':
                       help="Game animation FPS")
     parser.add_option("-n", "--ngames",
                       type="int", dest="NGAMES", default=0,
-                      help="Game animation FPS")
+                      help="Number of games to run")
     parser.add_option("-O", "--output",
                       type="string", dest="LOGFILE", default="gemgem_log.csv",
-                      help="Game animation FPS")
+                      help="Log file name")
 
     (options, args) = parser.parse_args()
 
