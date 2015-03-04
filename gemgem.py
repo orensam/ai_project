@@ -155,7 +155,7 @@ class Solver(object):
     def __init__(self, random_fall, solver_type, weights):
         self.random_fall = random_fall
         self.type = solver_type
-        self.uncertainty_thres = 0.1
+        self.uncertainty_thres = 0.15
         self.expanded_nodes = 0
 
         # Heuristics Weights
@@ -296,8 +296,8 @@ class Solver(object):
     def getMoveHeuristic(self, move):
 
         dest_board = move.dest_board
-        source_board = move.source_board
-        cur_nmoves = self.getMoveNumber(source_board)
+        # source_board = move.source_board
+        # cur_nmoves = self.getMoveNumber(source_board)
 
         h_score = self.w_score * move.score if self.w_score else 0
         h_pairs = self.w_pairs * self.getPairs(dest_board) if self.w_pairs else 0
@@ -322,14 +322,12 @@ class Solver(object):
             return 0
 
         dest_board = fs.moves[-1].dest_board
-        first_move = fs.moves[0]
-        dest_nmoves = self.getMoveNumber(dest_board)
 
         h_score = self.w_score * fs.getMovesFactor() if self.w_score else 0
         h_pairs = self.w_pairs * self.getPairs(dest_board) if self.w_pairs else 0
-        h_nmoves = self.w_nmoves * dest_nmoves if self.w_nmoves else 0
-        h_depth = self.w_depth * self.getDepthFactor(first_move) if self.w_depth else 0
-        h_touching = self.w_touching * self.getTouchingGemsNum(first_move.dest_board) if self.w_touching else 0
+        h_nmoves = self.w_nmoves * self.getMoveNumber(dest_board) if self.w_nmoves else 0
+        h_depth = self.w_depth * self.getStateDepthFactor(fs) if self.w_depth else 0
+        h_touching = self.w_touching * self.getTouchingGemsNum(dest_board) if self.w_touching else 0
 
         self.h_score_list.append(h_score)
         self.h_pairs_list.append(h_pairs)
@@ -344,28 +342,33 @@ class Solver(object):
     #### Heuristics ####
 
     def getTouchingGemsNum(self, board):
-        num_of_touching = 0
+        perimeter = set()
         for y in range(BOARDHEIGHT):
             for x in range(BOARDWIDTH):
                 if getGemAt(board, x, y) == -1:
-                    perimeter = [getGemAt(board, a, b) for (a, b) in
-                                 [(x+1, y), (x, y+1), (x-1, y), (x, y-1)]]
-                    num_of_touching += len([x for x in perimeter if x not in (-1, None)])
+                    p = [(a,b) for (a,b) in [(x+1, y), (x, y+1), (x-1, y), (x, y-1)]]
+                    perimeter |= set([(a,b) for (a,b) in p if getGemAt(board, a, b) not in (-1, None)])
+        num_of_touching = len(perimeter)
         return num_of_touching
 
     def getDepthFactor(self, move):
-        line = max((move.first['y'], move.second['y']))
+        line = max((move.first['y']+1, move.second['y']+1))
         return line
+
+    def getStateDepthFactor(self, fs):
+        avg = mean([self.getDepthFactor(m) for m in fs.moves])
+        return avg
 
     def getPairs(self, board):
         num_of_pairs = 0
         for y in range(BOARDHEIGHT):
             for x in range(BOARDWIDTH):
-                if getGemAt(board, x, y) == getGemAt(board, x + 1, y):
+                gem = getGemAt(board, x, y)
+                if gem == -1: continue
+                if gem == getGemAt(board, x + 1, y):
                     num_of_pairs += 1
-                if getGemAt(board, x, y) == getGemAt(board, x, y + 1):
+                if gem == getGemAt(board, x, y + 1):
                     num_of_pairs += 1
-        #print "Num of pairs:  %d " %num_of_pairs
         return num_of_pairs
 
     def getEntropy(self, board):
@@ -381,7 +384,6 @@ class Solver(object):
 
     def getMoveNumber(self, board):
         res = len(self.getPossibleMoves(board, False))
-        #print "Num of moves:  %d " %res
         return res
 
 
