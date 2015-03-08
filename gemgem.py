@@ -442,7 +442,7 @@ def main(is_manual, random_fall, ngames, algo, weights, no_graphics, logfile):
                            'w_nmoves', 'w_depth', 'w_touching',
                            'avg_h_score', 'avg_h_pairs',
                            'avg_h_nmoves', 'avg_h_depth', 'avg_h_touching',
-                           'goal_score', 'swaps', 'score', 'status', 'algorithm'])
+                           'goal_score', 'swaps', 'score', 'status', 'algorithm', 'algo_heuristic'])
 
     file_obj = open(logfile, 'w')
     file_obj.write(log_header + '\n')
@@ -475,7 +475,13 @@ def mean(lst):
 
 def log(file_obj, score, moves, solver):
     status = "win" if score >= GOAL_SCORE else "lose"
-    line = "%d,%d,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%d,%d,%d,%s,%s" \
+    if solver.type == STUPID_GREEDY:
+        algo_h = STUPID_GREEDY
+    else:
+        algo_h = '%s_s%.2f_p%.2f_n%.2f_d%.2f_t%.2f' %(solver.type, solver.w_score, solver.w_pairs, solver.w_nmoves,
+                                                      solver.w_depth, solver.w_touching)
+
+    line = "%d,%d,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%d,%d,%d,%s,%s,%s" \
             %(BOARDWIDTH, NUMGEMIMAGES,
 
               solver.w_score, solver.w_pairs,
@@ -484,7 +490,7 @@ def log(file_obj, score, moves, solver):
               mean(solver.h_score_list), mean(solver.h_pairs_list),
               mean(solver.h_nmoves_list), mean(solver.h_depth_list), mean(solver.h_touching_list),
 
-              GOAL_SCORE, moves, score, status, solver.type)
+              GOAL_SCORE, moves, score, status, solver.type, algo_h)
 
     file_obj.write(line + '\n')
 
@@ -1089,6 +1095,6 @@ if __name__ == '__main__':
     NUMGEMIMAGES = options.GEM_NUM
     GOAL_SCORE = options.GOAL
     FPS = options.USER_FPS
-    weights = [int(x) for x in options.WEIGHTS.split()]
+    weights = [float(x) for x in options.WEIGHTS.split()]
 
     main(options.IS_MANUAL, options.RANDOM_FALL, options.NGAMES, ALGOS[options.ALGO], weights, options.NO_GRAPHICS, options.LOGFILE)
