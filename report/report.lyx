@@ -1,0 +1,300 @@
+#LyX 2.1 created this file. For more info see http://www.lyx.org/
+\lyxformat 474
+\begin_document
+\begin_header
+\textclass IEEEtran
+\begin_preamble
+\date{}
+\end_preamble
+\use_default_options true
+\maintain_unincluded_children false
+\language american
+\language_package default
+\inputencoding auto
+\fontencoding global
+\font_roman default
+\font_sans default
+\font_typewriter default
+\font_math auto
+\font_default_family default
+\use_non_tex_fonts false
+\font_sc false
+\font_osf false
+\font_sf_scale 100
+\font_tt_scale 100
+\graphics default
+\default_output_format default
+\output_sync 0
+\bibtex_command default
+\index_command default
+\paperfontsize default
+\spacing single
+\use_hyperref false
+\papersize default
+\use_geometry true
+\use_package amsmath 1
+\use_package amssymb 1
+\use_package cancel 1
+\use_package esint 1
+\use_package mathdots 1
+\use_package mathtools 1
+\use_package mhchem 1
+\use_package stackrel 1
+\use_package stmaryrd 1
+\use_package undertilde 1
+\cite_engine basic
+\cite_engine_type default
+\biblio_style plain
+\use_bibtopic false
+\use_indices false
+\paperorientation portrait
+\suppress_date false
+\justification true
+\use_refstyle 1
+\index Index
+\shortcut idx
+\color #008000
+\end_index
+\leftmargin 1cm
+\topmargin 2cm
+\rightmargin 1cm
+\bottommargin 2cm
+\secnumdepth -2
+\tocdepth 2
+\paragraph_separation indent
+\paragraph_indentation 0bp
+\quotes_language english
+\papercolumns 1
+\papersides 1
+\paperpagestyle default
+\tracking_changes false
+\output_changes false
+\html_math_output 0
+\html_css_as_file 0
+\html_be_strict false
+\end_header
+
+\begin_body
+
+\begin_layout Standard
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+markboth{The Hebrew University of Jerusalem, March 2015}{}
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Title
+Crushing Candy Crush - An AI Project
+\end_layout
+
+\begin_layout Author
+Daniel Hadar & Oren Samuel
+\end_layout
+
+\begin_layout Standard
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+begin{abstract}
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+In this work, we propose several search methods in order to provide a solving
+ meachnism for a general Match-3 game, such as Candy-Crush, in its simplest
+ form.
+\end_layout
+
+\begin_layout Standard
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+end{abstract}
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Section
+Introduction
+\end_layout
+
+\begin_layout Subsection
+What are Match-3 Games?
+\end_layout
+
+\begin_layout Standard
+On March 26th 2014, the mobile game development company King Digital Entertainme
+nt became a publicly traded company, valued at over $7 Billion.
+ Their most popular game (and the one that brought in most of their capital)
+ was Candy Crush Saga, a Match-3 Puzzle video game, available for play on
+ Facebook and on mobile platforms.
+ This was another milestone in the evolution of Match-3 video games (a subset
+ of the more general Tile Matching category of games), which finds its roots
+ in the well-known Tetris (1985), goes through games like Yoshi’s Cookie
+ (1992) and Bejewled (2001), and is still present today, as King Digital
+ releases new levels for Candy Crush Saga on a weekly basis.
+ Match-3 is family of single-player video games; The basic, common elements
+ are a game board (usually square or rectangular in shape) and bricks of
+ different types, arranged in a matrix formation on the board.
+ In some games, the bricks change their location independently as time passes;
+ in others, the bricks remain still until the player interferes.
+ The types of moves a player can perform differ between games - moving,
+ swapping and rotating of a single brick or a cluster of bricks all appear
+ in some implementations of Match-3 games.
+ The player’s goal, however, is mostly the same - to identify patterns in
+ the bricks’ arrangement across the board, and create clusters of bricks
+ of the same type.
+ Creating a cluster makes it disappear from the board and awards the player
+ with an amount of points proportional to the cluster’s size.
+\end_layout
+
+\begin_layout Subsection
+GemGem
+\end_layout
+
+\begin_layout Standard
+In order to to research the general Match-3 category of games, we used a
+ basic open-source Candy Crush Saga clone called GemGem.
+ The version presented here is a version we modified for the purpose of
+ this paper; The original version can be found online
+\begin_inset Foot
+status open
+
+\begin_layout Plain Layout
+\begin_inset CommandInset href
+LatexCommand href
+name "http://inventwithpython.com/blog/2011/06/24/new-game-source-code-gemgem-a-bejeweled-clone/"
+target "http://inventwithpython.com/blog/2011/06/24/new-game-source-code-gemgem-a-bejeweled-clone/"
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Subsubsection
+The Rules
+\end_layout
+
+\begin_layout Standard
+In GemGem, the basic setting is a square checkered board.
+ Each cell in the board contains a 'gem' of a certain color.
+ The board's side size and number of unique gems types can be configured
+ by the player: board size can be set in the range 
+\begin_inset Formula $4..8$
+\end_inset
+
+; the number of gems can be set in the range 
+\begin_inset Formula $4..7$
+\end_inset
+
+.
+ A player's move consists of choosing two adjacent gems to switch between.
+ We say that a switch is 
+\shape italic
+valid
+\shape default
+ if and only if it produces a board where there is at least one 
+\shape italic
+sequence
+\shape default
+ - a vertical or horizontal chain of 
+\begin_inset Formula $3$
+\end_inset
+
+ or more consecutive gems of the same color.
+ An invalid move is not allowed.
+ 
+\end_layout
+
+\begin_layout Standard
+Once a valid move is performed, the following process is initiated:
+\end_layout
+
+\begin_layout Enumerate
+The gems in the created sequence(s) are cleared, rendering their cells empty.
+\end_layout
+
+\begin_layout Enumerate
+The gems which reside above the empty cells are pulled down in a gravitational
+ manner, filling the empty cells.
+ The fallen gems’ original cells become empty.
+\end_layout
+
+\begin_layout Enumerate
+New gems 
+\shape italic
+appear
+\shape default
+ (i.e “fall down”) in the now empty cells.
+\end_layout
+
+\begin_layout Enumerate
+If the process creates new gem sequences, return to step 1.
+ Otherwise, wait for the player's next move.
+\end_layout
+
+\begin_layout Standard
+A 
+\begin_inset Quotes eld
+\end_inset
+
+chain reaction
+\begin_inset Quotes erd
+\end_inset
+
+, i.e a series of 2 or more such iterations, is called a cascade.
+ Once the the iteration process is finished, i.e there are no remaining sequences
+ on the board, we say that the board is stable.
+\end_layout
+
+\begin_layout Section
+Approach and Methods
+\end_layout
+
+\begin_layout Section
+Results
+\end_layout
+
+\begin_layout Section
+Analysis
+\end_layout
+
+\begin_layout Section
+Conclusions
+\end_layout
+
+\begin_layout Section
+Future Research
+\end_layout
+
+\end_body
+\end_document
