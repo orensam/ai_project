@@ -173,12 +173,16 @@ nt became a publicly traded company, valued at over $7 Billion.
 \end_layout
 
 \begin_layout Subsection
-GemGem
+The game at hand: GemGem
 \end_layout
 
 \begin_layout Standard
 In order to to research the general Match-3 category of games, we used a
- basic open-source Candy Crush Saga clone called GemGem.
+ basic open-source, 
+\shape italic
+pygame
+\shape default
+-based Candy Crush Saga clone called GemGem.
  The version presented here is a version we modified for the purpose of
  this paper; The original version can be found online.
 \begin_inset Foot
@@ -282,7 +286,7 @@ If the process creates new gem sequences, return to step 1.
 \end_layout
 
 \begin_layout Standard
-A 
+This 
 \begin_inset Quotes eld
 \end_inset
 
@@ -290,7 +294,7 @@ chain reaction
 \begin_inset Quotes erd
 \end_inset
 
-, i.e a series of 2 or more such iterations, is called a 
+, i.e a series of 1 or more such iterations, is called a 
 \shape italic
 cascade
 \shape default
@@ -382,6 +386,53 @@ free
 
  points are given to the player, and the playing field is leveled, so to
  speak, when starting a game.
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula $ $
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsubsection
+Scoring Method
+\end_layout
+
+\begin_layout Standard
+A cascade awards the player 
+\begin_inset Formula $x$
+\end_inset
+
+ points, where 
+\begin_inset Formula $x$
+\end_inset
+
+ is equals the number of gems cleared during the cascade.
+ For example........
+\end_layout
+
+\begin_layout Standard
+.........
+\end_layout
+
+\begin_layout Standard
+..........
+\end_layout
+
+\begin_layout Standard
+We emphasize that it's at least s points because of assumption 2 mentioned
+ before - appearing gems are randomized, therefore they can make the cascade
+ longer than one can predict, and clear more gems from the board.
+\end_layout
+
+\begin_layout Subsection
+Problem Definition
+\end_layout
+
+\begin_layout Standard
+Once the rules of the game are well-defined, we can take on the mission
+ of defining the abstract problem that lies within the game.
 \end_layout
 
 \begin_layout Section
