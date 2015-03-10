@@ -180,7 +180,7 @@ GemGem
 In order to to research the general Match-3 category of games, we used a
  basic open-source Candy Crush Saga clone called GemGem.
  The version presented here is a version we modified for the purpose of
- this paper; The original version can be found online
+ this paper; The original version can be found online.
 \begin_inset Foot
 status open
 
@@ -197,28 +197,43 @@ target "http://inventwithpython.com/blog/2011/06/24/new-game-source-code-gemgem-
 
 \end_inset
 
-.
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula $ $
+\end_inset
+
+
 \end_layout
 
 \begin_layout Subsubsection
-The Rules
+Rules 
 \end_layout
 
 \begin_layout Standard
 In GemGem, the basic setting is a square checkered board.
  Each cell in the board contains a 'gem' of a certain color.
- The board's side size and number of unique gems types can be configured
- by the player: board size can be set in the range 
-\begin_inset Formula $4..8$
+ The board's side 
+\emph on
+size
+\emph default
+ and number of unique gems types can be configured by the player: board
+ size can be set in the range 
+\begin_inset Formula $4-8$
 \end_inset
 
 ; the number of gems can be set in the range 
-\begin_inset Formula $4..7$
+\begin_inset Formula $4-7$
 \end_inset
 
 .
- A player's move consists of choosing two adjacent gems to switch between.
- We say that a switch is 
+ A player's move (
+\shape italic
+swap
+\shape default
+) consists of choosing two adjacent gems to switch between.
+ We say that a swap is 
 \shape italic
 valid
 \shape default
@@ -231,22 +246,26 @@ sequence
 \end_inset
 
  or more consecutive gems of the same color.
- An invalid move is not allowed.
+ An invalid swap is not allowed.
  
 \end_layout
 
 \begin_layout Standard
-Once a valid move is performed, the following process is initiated:
+Once a valid swap is performed, the following process is initiated:
 \end_layout
 
 \begin_layout Enumerate
-The gems in the created sequence(s) are cleared, rendering their cells empty.
+The gems in the created sequence(s) are 
+\shape italic
+cleared
+\shape default
+, rendering their cells empty.
 \end_layout
 
 \begin_layout Enumerate
 The gems which reside above the empty cells are pulled down in a gravitational
  manner, filling the empty cells.
- The fallen gems’ original cells become empty.
+ The fallen gems' original cells become empty.
 \end_layout
 
 \begin_layout Enumerate
@@ -259,7 +278,7 @@ appear
 
 \begin_layout Enumerate
 If the process creates new gem sequences, return to step 1.
- Otherwise, wait for the player's next move.
+ Otherwise, wait for the player's next swap.
 \end_layout
 
 \begin_layout Standard
@@ -271,9 +290,98 @@ chain reaction
 \begin_inset Quotes erd
 \end_inset
 
-, i.e a series of 2 or more such iterations, is called a cascade.
+, i.e a series of 2 or more such iterations, is called a 
+\shape italic
+cascade
+\shape default
+.
  Once the the iteration process is finished, i.e there are no remaining sequences
- on the board, we say that the board is stable.
+ on the board, we say that the board is 
+\shape italic
+stable
+\shape default
+.
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula $ $
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsubsection
+Assumptions
+\end_layout
+
+\begin_layout Standard
+Under the given rules, there are many ways one could interpret some aspects
+ of the game's behaviour.
+ We tried to be as straightforward as possible - the 
+\shape italic
+simplest
+\shape default
+ interpretation is also the 
+\shape italic
+best
+\shape default
+ interpretation.
+ Utilizing this approach, the game behaves in 
+\emph on
+the
+\emph default
+ following manner:
+\end_layout
+
+\begin_layout Enumerate
+
+\series bold
+Clusters:
+\series default
+ If a swap creates a 
+\shape italic
+cluster 
+\shape default
+(i.e an arbitrary arrangement of consecutive same-colored gems), the board
+ is only cleared of gems that form parts of actual sequences.
+ Other gems in the cluster are kept on the board.
+ That is in contrast to some Match-3 variants where a whole cluster is can
+ be cleared from the board.
+\end_layout
+
+\begin_layout Enumerate
+
+\series bold
+Randomization of appearing gems: 
+\series default
+The appearing gems (that fill the empty spaces created by cleared sequences)
+ are chosen uniformly at random.
+ That is in disagreement with the original implementation of GemGem, which
+ prevented from appearing gems to be identically-colored to their neighbors
+ on the board.
+ When the game is configured such that the number of gem types is small,
+ this assumption might cause very long cascades; however, contradicting
+ this assumption makes the game almost deterministic, which is an even more
+ undesirable trait.
+\end_layout
+
+\begin_layout Enumerate
+
+\series bold
+Randomization of the initial board: 
+\series default
+Contrary to the previous assumption, the initialization of the board is
+ not random.
+ The board is initialized such that there are no sequences - so no 
+\begin_inset Quotes eld
+\end_inset
+
+free
+\begin_inset Quotes erd
+\end_inset
+
+ points are given to the player, and the playing field is leveled, so to
+ speak, when starting a game.
 \end_layout
 
 \begin_layout Section
