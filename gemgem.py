@@ -390,7 +390,12 @@ class Solver(object):
 def main(is_manual, random_fall, ngames, algo, weights, no_graphics, logfile):
 
     print
-    print "Running %d games in %s mode" %(ngames, 'manual' if is_manual else 'auto')
+    games_str = "%d games" %ngames
+    if ngames == 0:
+        games_str = "forever"
+    if ngames == 1:
+        games_str = "1 game"
+    print "Running %s in %s mode" %(games_str, 'manual' if is_manual else 'auto')
     if not is_manual:
         print "Using solver algorithm: %s" %algo
     print
@@ -400,8 +405,10 @@ def main(is_manual, random_fall, ngames, algo, weights, no_graphics, logfile):
     # Initial set up.
     pygame.init()
     FPSCLOCK = pygame.time.Clock()
+
     DISPLAYSURF = pygame.display.set_mode((WINDOWWIDTH, WINDOWHEIGHT))
     pygame.display.set_caption('Gemgem')
+
     BASICFONT = pygame.font.Font('freesansbold.ttf', 36)
 
     # Load the images
@@ -413,11 +420,11 @@ def main(is_manual, random_fall, ngames, algo, weights, no_graphics, logfile):
         GEMIMAGES.append(gemImage)
 
     # Load the sounds.
-    GAMESOUNDS = {}
-    GAMESOUNDS['bad swap'] = pygame.mixer.Sound('badswap.wav')
-    GAMESOUNDS['match'] = []
-    for i in range(NUMMATCHSOUNDS):
-        GAMESOUNDS['match'].append(pygame.mixer.Sound('match%s.wav' % i))
+    #GAMESOUNDS = {}
+    #GAMESOUNDS['bad swap'] = pygame.mixer.Sound('badswap.wav')
+    #GAMESOUNDS['match'] = []
+    #for i in range(NUMMATCHSOUNDS):
+    #    GAMESOUNDS['match'].append(pygame.mixer.Sound('match%s.wav' % i))
 
     # Create pygame.Rect objects for each board space to
     # do board-coordinate-to-pixel-coordinate conversions.
@@ -442,10 +449,12 @@ def main(is_manual, random_fall, ngames, algo, weights, no_graphics, logfile):
                            'w_nmoves', 'w_depth', 'w_touching',
                            'avg_h_score', 'avg_h_pairs',
                            'avg_h_nmoves', 'avg_h_depth', 'avg_h_touching',
-                           'goal_score', 'swaps', 'score', 'status', 'algorithm', 'algo_heuristic'])
+                           'goal_score', 'swaps', 'score', 'status', 'algorithm', 'algo_heuristic',
+                           'time_seconds'])
 
     file_obj = open(logfile, 'w')
     file_obj.write(log_header + '\n')
+    file_obj.close()
 
     times = []
     while game_counter <= ngames:
@@ -455,7 +464,7 @@ def main(is_manual, random_fall, ngames, algo, weights, no_graphics, logfile):
             score, moves = runGame(is_manual, game_solver, no_graphics)
             end = datetime.datetime.now()
             diff = end - start
-            log(file_obj, score, moves, game_solver)
+            log(logfile, score, moves, game_solver, diff.total_seconds())
             print "Game %d ended: %d points in %d moves" %(game_counter, score, moves)
             print "Game took %.2f seconds" % diff.total_seconds()
             if score >= GOAL_SCORE:
@@ -463,7 +472,7 @@ def main(is_manual, random_fall, ngames, algo, weights, no_graphics, logfile):
             print
             game_counter += 1
         except KeyboardInterrupt:
-            file_obj.close()
+            #file_obj.close()
             break
 
     print "Finished %d games." %(game_counter-1)
@@ -473,7 +482,7 @@ def main(is_manual, random_fall, ngames, algo, weights, no_graphics, logfile):
 def mean(lst):
     return sum(lst) / float(len(lst)) if lst else 0
 
-def log(file_obj, score, moves, solver):
+def log(logfile, score, moves, solver, seconds):
     status = "win" if score >= GOAL_SCORE else "lose"
     if solver.type == STUPID_GREEDY:
         algo_h = STUPID_GREEDY
@@ -481,7 +490,7 @@ def log(file_obj, score, moves, solver):
         algo_h = '%s_s%.2f_p%.2f_n%.2f_d%.2f_t%.2f' %(solver.type, solver.w_score, solver.w_pairs, solver.w_nmoves,
                                                       solver.w_depth, solver.w_touching)
 
-    line = "%d,%d,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%d,%d,%d,%s,%s,%s" \
+    line = "%d,%d,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%d,%d,%d,%s,%s,%s,%.2f" \
             %(BOARDWIDTH, NUMGEMIMAGES,
 
               solver.w_score, solver.w_pairs,
@@ -490,9 +499,11 @@ def log(file_obj, score, moves, solver):
               mean(solver.h_score_list), mean(solver.h_pairs_list),
               mean(solver.h_nmoves_list), mean(solver.h_depth_list), mean(solver.h_touching_list),
 
-              GOAL_SCORE, moves, score, status, solver.type, algo_h)
+              GOAL_SCORE, moves, score, status, solver.type, algo_h, seconds)
 
+    file_obj = open(logfile, 'a')
     file_obj.write(line + '\n')
+    file_obj.close()
 
 
 def runGame(is_manual=False, game_solver=None, no_graphics=False):
@@ -591,10 +602,13 @@ def runGame(is_manual=False, game_solver=None, no_graphics=False):
                 firstSelectedGem = None # deselect the first gem
                 continue
 
-            new_board, score = perform_move(gameBoard, firstSwappingGem, secondSwappingGem,
+            new_board, new_score = perform_move(gameBoard, firstSwappingGem, secondSwappingGem,
                                             score, total_moves, simulation=no_graphics, random_fall=True)
 
-            total_moves += 1
+            if new_score is not None:
+                total_moves += 1
+                score += new_score
+
             firstSelectedGem = None
 
         if not canMakeMove(gameBoard):
@@ -675,6 +689,9 @@ def perform_move(gameBoard, firstSwappingGem, secondSwappingGem, score=0, moves=
 
         gameBoard[firstSwappingGem['x']][firstSwappingGem['y']] = firstSwappingGem['imageNum']
         gameBoard[secondSwappingGem['x']][secondSwappingGem['y']] = secondSwappingGem['imageNum']
+
+        return gameBoard, None
+
     else:
         # This was a matching move.
         while matchedGems:
