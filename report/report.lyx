@@ -308,6 +308,14 @@ stable
 \end_layout
 
 \begin_layout Standard
+If there are no valid swaps on the board, we say that we've reached a 
+\shape italic
+game-over
+\shape default
+ state.
+\end_layout
+
+\begin_layout Standard
 \begin_inset Formula $ $
 \end_inset
 
@@ -433,6 +441,134 @@ Problem Definition
 \begin_layout Standard
 Once the rules of the game are well-defined, we can take on the mission
  of defining the abstract problem that lies within the game.
+\end_layout
+
+\begin_layout Standard
+There are many natural problems that arise with the given set of rules.
+ We've concluded that, from an AI point of view, there are 3 problems that
+ would be intersting to tacle:
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula $ $
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Given an 
+\begin_inset Formula $s\times s$
+\end_inset
+
+ Match-3 board containg 
+\begin_inset Formula $g$
+\end_inset
+
+ types of gems, try to:
+\end_layout
+
+\begin_layout Description
+(P1) Minimize the number of swaps needed to reach a score of at least 
+\begin_inset Formula $c$
+\end_inset
+
+,
+\end_layout
+
+\begin_layout Description
+(P2) Maximize the score while performing at most 
+\begin_inset Formula $k$
+\end_inset
+
+ moves, or
+\end_layout
+
+\begin_layout Description
+(P3) Perform as many moves as possible without reaching a game-over state.
+\end_layout
+
+\begin_layout Standard
+We've chosen to tacle P1; We will later describe possible modifications
+ to our approach that could tacle P2 and P3.
+\end_layout
+
+\begin_layout Standard
+The problem is interesting because of the complexity of predicting a large
+ amount of possible future moves (similarly to chess-like games) - thus
+ AI tools are expected to improve the results when compared to simpler algorithm
+s and human subjects.
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula $ $
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsubsection
+NP Completeness
+\end_layout
+
+\begin_layout Standard
+Two papers, both published in March 2014, took on proving that problems
+ arising from Match-3 games are NP-Complete.
+\end_layout
+
+\begin_layout Standard
+The first such paper, by Guala, Leucci and Natale, defines 5 such problems
+ (denoted Q1 through Q5).
+ The first of which (Q1) is formulated in the following manner: 
+\shape italic
+Is there a sequence of moves that allows the player to pop a specific gem?
+ 
+\shape default
+The authors then go on to prove that Q1 is NP-Complete.
+ Then, Q2 through Q5 are proven to be NP-Complete by reduction to Q1.
+ 
+\end_layout
+
+\begin_layout Standard
+Q3 is of special interest to us, and is formulated as such: 
+\shape italic
+Can the player get a score of at least x in less than k moves? 
+\shape default
+This problem is very similar to our problem (P1), and we can perform a simple
+ decision-to-search reduction from Q3 to P1: If we are to minimize the number
+ of swaps moves needed to achieve a score 
+\begin_inset Formula $c$
+\end_inset
+
+, we can check whether 
+\begin_inset Formula $c$
+\end_inset
+
+ is achievable within 
+\begin_inset Formula $1$
+\end_inset
+
+ move; if not, check whether it's achievable within 2 moves, and so one.
+ The first time we get a positive answer will give us the minimal number
+ of moves needed to reach score 
+\begin_inset Formula $c$
+\end_inset
+
+.
+ This, if so, implies that P1 is indeed NP-Complete.
+ In a very similar approach, we can show that P2 is NP-Complete.
+ And, if we utilize Q5 from Guala's paper, we can show that P3 is NP-Complete
+ as well.
+ It is noteworthy that the second paper, by Walsh, shows that Q3 is NP-Complete,
+ too, and does so by formulating a reduction to the 3-SAT problem.
+\end_layout
+
+\begin_layout Subsubsection
+Board Size
+\end_layout
+
+\begin_layout Standard
+
 \end_layout
 
 \begin_layout Section
