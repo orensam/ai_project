@@ -421,11 +421,11 @@ A cascade awards the player
 \end_layout
 
 \begin_layout Standard
-.........
+############
 \end_layout
 
 \begin_layout Standard
-..........
+#############
 \end_layout
 
 \begin_layout Standard
@@ -564,11 +564,93 @@ This problem is very similar to our problem (P1), and we can perform a simple
 \end_layout
 
 \begin_layout Subsubsection
-Board Size
+Setting the Parameters
 \end_layout
 
 \begin_layout Standard
+In our tests, the board size 
+\begin_inset Formula $s$
+\end_inset
 
+ is set to 
+\begin_inset Formula $6$
+\end_inset
+
+ and the number of gem types 
+\begin_inset Formula $g$
+\end_inset
+
+ is set to 
+\begin_inset Formula $4$
+\end_inset
+
+.
+ The target score 
+\begin_inset Formula $c$
+\end_inset
+
+ is set to 
+\begin_inset Formula $250$
+\end_inset
+
+.
+ We took these decisions after running preliminary tests over all of the
+ possible combinations 
+\begin_inset Formula $\left(s,g\right)\in\left\{ 4,5,6,7,8\right\} \times\left\{ 4,5,6,7\right\} $
+\end_inset
+
+.
+ Our analysis showed that when 
+\begin_inset Formula $\nicefrac{s}{g}\leq1$
+\end_inset
+
+, the proportion of games reaching a premature game-over state (i.e ending
+ before the target score is reached) was 
+\begin_inset Formula $\sim\frac{1}{2}$
+\end_inset
+
+, and this proportion grows as 
+\begin_inset Formula $\nicefrac{s}{g}$
+\end_inset
+
+ decreases.
+ On the other hand, when 
+\begin_inset Formula $\nicefrac{s}{g}$
+\end_inset
+
+ increases and approaches 
+\begin_inset Formula $2$
+\end_inset
+
+, there are too many valid swaps on the board for our algorithms to have
+ a reasonable runtime.
+ Therefore, we concluded that 
+\begin_inset Formula $s=6$
+\end_inset
+
+ and 
+\begin_inset Formula $g=4$
+\end_inset
+
+ (i.e 
+\begin_inset Formula $\nicefrac{s}{g}=1.5$
+\end_inset
+
+) is a good compromise - there's a relatively small chance to reach dead-ends
+ (game-over states), while the number of valid swaps is small enough that
+ we can run thpusands of games in a reasonable amount of time.
+\end_layout
+
+\begin_layout Standard
+###############
+\end_layout
+
+\begin_layout Standard
+###############
+\end_layout
+
+\begin_layout Standard
+Add Graph of s/g
 \end_layout
 
 \begin_layout Section
