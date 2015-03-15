@@ -1000,8 +1000,141 @@ Touching
 Implementation Issues
 \end_layout
 
-\begin_layout Standard
+\begin_layout Itemize
 
+\series bold
+Simulation of Appearing Gems:
+\series default
+ In L-BFS, when predicting future boards (derived from simulated swaps),
+ we had to decide how to approach the appearing gems.
+ On the one hand, we can simulate them using the same distribution function
+ used when actually generating the gems (see assumption 2) and take them
+ into account when looking for swaps in a future board; On the other hand,
+ we can view the cleared cells as empty, and opt to use only the gems that
+ we know for certain will exist in that board.
+ In favour of the first approach is the fact that it yields more future
+ swap options, that are likely to be similar to the actual future boards;
+ Moreover, it would be possible to eliminate the use of the limited uncertainty
+ factor.
+ In favour of the second one is the fact that every predicted move will
+ almost certainly be a valid future move - as opposed to the first approach,
+ where we might predict moves in a board that will never actually exist.
+ We ruled in favor of the second approach, as it makes our heuristics admissible
+, and avoids the exaggerated promotion high-scoring imaginary swaps that
+ will not be valid in actual future boards.
+ Preliminary tests supported our intuition and gave worse results when simulatin
+g appearing gems; we saw that oftentimes the algorithm chooses a swap based
+ on false predictions.
+\end_layout
+
+\begin_layout Itemize
+
+\series bold
+Reevaluation Timing (Sequence vs.
+ Single move):
+\series default
+ As stated before, in each L-BFS step we predict paths from the current
+ board until we reach a cutoff.
+ Once choosing the best leaf node, we are faced with two options: either
+ perform the entire sequence of swaps, or only perform the first one.
+ One main advantage of the sequence approach is running time - we only need
+ to search through the board space once every few swaps, whereas in the
+ single step approach we need to search after every swap.
+ However, the sequence approach might, in some cases, cause us to try invalid
+ swaps.
+ We opted for the more deterministic single-step approach.
+\end_layout
+
+\begin_layout Itemize
+
+\series bold
+Calibration of the Uncertainty Limit 
+\begin_inset Formula $U$
+\end_inset
+
+: 
+\series default
+Intuitively, 
+\begin_inset Formula $U$
+\end_inset
+
+ should be well below 
+\begin_inset Formula $0.5$
+\end_inset
+
+ - for if we don't know the contents of more than half the board, our swap
+ choices will surely be poor.
+ However, if it is set too low, L-BFS might be too limited with respect
+ to the length of the simulated swap series.
+ Running time also has a say in this - setting 
+\begin_inset Formula $U$
+\end_inset
+
+ too high might make the swap series too long for L-BFS to run in a reasonable
+ time.
+ We foun that setting 
+\begin_inset Formula $U$
+\end_inset
+
+ around 
+\begin_inset Formula $0.2$
+\end_inset
+
+ gives a good balance of the different considerations.
+\end_layout
+
+\begin_layout Subsubsection
+Test Plan
+\end_layout
+
+\begin_layout Standard
+We carried out a 3-tiered testing scheme, where the first two tiers helped
+ us calibrate the algorithms and focus us on the more relevant areas.
+ Needless to say, many of the implementation issues previously described
+ were solved by these tests.
+ We denote our five heuristic by 
+\begin_inset Formula $hs$
+\end_inset
+
+ (Score), 
+\begin_inset Formula $hd$
+\end_inset
+
+ (Depth), 
+\begin_inset Formula $hp$
+\end_inset
+
+ (Pairs), 
+\begin_inset Formula $hn$
+\end_inset
+
+ (Moves) and 
+\begin_inset Formula $ht$
+\end_inset
+
+ (Touching).
+\end_layout
+
+\begin_layout Enumerate
+Preliminary Tests
+\end_layout
+
+\begin_deeper
+\begin_layout Enumerate
+100 SGS games.
+\end_layout
+
+\begin_layout Enumerate
+5 human subjects, 10 games each.
+\end_layout
+
+\end_deeper
+\begin_layout Enumerate
+Basic Heuristics and Combinations
+\end_layout
+
+\begin_layout Enumerate
+Weight Calibration
 \end_layout
 
 \begin_layout Section
