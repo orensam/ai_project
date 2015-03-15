@@ -657,6 +657,353 @@ Add Graph of s/g
 Approach and Methods
 \end_layout
 
+\begin_layout Subsubsection
+Why Search?
+\end_layout
+
+\begin_layout Standard
+Generally speaking, the problem at hand requires us, given a game board,
+ to choose a minimal series of swaps which will beat a certain score.
+ The natural approach to this kind of problem, which we indeed chose, is
+ to use search teqchniques - where the state space is the set of all possible
+ boards, and the transitions are valid swaps that form a transition from
+ one state to another.
+ Another somewhat natural approach is to use learning techniques - however,
+ it is not as suitable, because of the huge size of the problems state space
+ (
+\begin_inset Quotes eld
+\end_inset
+
+board space
+\begin_inset Quotes erd
+\end_inset
+
+).
+ Roughly speaking, assuming each of the 
+\begin_inset Formula $s^{2}$
+\end_inset
+
+ cells on the board can be filled by any of the 
+\begin_inset Formula $g$
+\end_inset
+
+ gem types, the state space's size is in the vicinity of 
+\begin_inset Formula $g^{s^{2}}$
+\end_inset
+
+.
+ For our chosen values (
+\begin_inset Formula $s=6,\ g=4$
+\end_inset
+
+) this results in a state space of size 
+\begin_inset Formula $\sim2^{72}$
+\end_inset
+
+.
+ This means that encountering he same board twice is unlikely, and therefore
+ learning the best swap to perform on a given board is not a trivial task.
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula $ $
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsubsection
+The Non-Determinism Question
+\end_layout
+
+\begin_layout Standard
+Finding an optimal series of transitions through state space is a relatively
+ simple task when dealing with a 
+\shape italic
+deterministic
+\shape default
+ world - one where the result of a move can be predicted.
+ In our problem, however, this isn't the case - since after every swap (and
+ the resulting cascade) the game drops random gems from the top of the board,
+ we're dealing with a 
+\shape italic
+non-deterministic
+\shape default
+ search problem.
+ Therefore, a simple application of a general search algorithm cannot work
+ in our case, and we have to resort to our own variants of searching techniques.
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula $ $
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsubsection
+Problem Representation
+\end_layout
+
+\begin_layout Standard
+In order to represent the problem in search terms, we can define the problem
+ in the following manner: we are given a graph 
+\begin_inset Formula $G=\left\langle V,E\right\rangle $
+\end_inset
+
+ where 
+\begin_inset Formula $V=\left\{ v\ :\ v\text{ is a board}\right\} $
+\end_inset
+
+ and 
+\begin_inset Formula $E=\left\{ e=\left\langle v_{1},v_{2}\right\rangle \ :\ v_{1},v_{2}\in V\text{ and }e\text{ is a swap that yields }v_{2}\text{ from }v_{1}\right\} $
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+The starting point of the graph is the start board.
+ This is an abstract definition that will help us think about the problem
+ in search terms; it does not, however, capture the non-determinism described
+ previously - more on that when we talk about the algorithms required to
+ run over this graph.
+ 
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula $ $
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsubsection
+Methods
+\end_layout
+
+\begin_layout Standard
+We implemented 3 algorithms and 5 heuristics (detailed below).
+ The first algorithm is a non-heuristic “stupid” baseline algorithm; The
+ other two decide which move to preform using a weighing of the different
+ heuristics.
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula $ $
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+
+\series bold
+The Algorithms:
+\end_layout
+
+\begin_layout Itemize
+
+\series bold
+Stupid Greedy Search (SGS): 
+\series default
+Given a board, the algorithm finds all the valid swaps and computes their
+ direct score, i.e the number of gems about to be cleared solely from the
+ swap itself, without considering the (possibly) resulting cascade.
+ The chosen swap is the maximal swap with respect to the direct score; if
+ there are several maximal swaps, one of them is chosen at random.
+ This algorithm will serve as a good baseline, since as we'll see later,
+ it gives a good model for the behaviour of human players.
+\end_layout
+
+\begin_layout Itemize
+
+\series bold
+Heuristic Greedy Search (HGS): 
+\series default
+Similarly to SGS, HGS chooses the best swap that can be done in the current
+ board with respect to its immediate result (and hence the title of 'greedy').
+ Contrary to SGS, the score of each swap is calculated including the predicted
+ cascade, and is given based on the different heuristics - different weights
+ can be assigned to each heuristic, and interesting weighted combinations
+ between them can be created.
+\end_layout
+
+\begin_layout Itemize
+
+\series bold
+Limited Breadth First Search (L-BFS): 
+\series default
+Similarly to HGS, L-BFS chooses the best move using simulation of cascades
+ and using heuristic scoring.
+ Contrary to HGS, this algorithms performs a look-ahead, or simulation,
+ of several swaps, effectively searching through the graph of boards described
+ earlier.
+ The algorithm begins with the start board as a root node.
+ Then, all the possible swaps are found, their resulting boards are calculated,
+ and these boards are added as nodes in the graph.
+ The process is then applied to all the new nodes, and the same process
+ is performed iteratively.
+ The process stops when all nodes have reached a state we call 
+\shape italic
+cutoff
+\shape default
+ , which means the at least one of two properties apply to the relevant
+ board:
+\end_layout
+
+\begin_deeper
+\begin_layout Itemize
+The board is in a game-over state.
+\end_layout
+
+\begin_layout Itemize
+The board has reached a predefined 
+\shape italic
+uncertainty limit: 
+\shape default
+denote 
+\begin_inset Formula $u=\frac{d}{s^{2}}$
+\end_inset
+
+ where 
+\begin_inset Formula $d$
+\end_inset
+
+ is the total score of the swap series leading up to the current board (i.e
+ the number of gems cleared in the current branch of the look-ahead) and
+ 
+\begin_inset Formula $s$
+\end_inset
+
+ is the board size.
+ Then 
+\begin_inset Formula $u$
+\end_inset
+
+ is the 
+\shape italic
+uncertainty factor
+\shape default
+ of the board - it represnts the percentage of the board which is unknown
+ to us.
+ Therefore, if 
+\begin_inset Formula $u$
+\end_inset
+
+ passes a certain (predetermined) uncertainty limit 
+\begin_inset Formula $0\leq U\leq1$
+\end_inset
+
+, we deem he board 
+\begin_inset Quotes eld
+\end_inset
+
+too uncertain
+\begin_inset Quotes erd
+\end_inset
+
+ to continue looking ahead from.
+\end_layout
+
+\begin_layout Standard
+Finally, when all nodes are at a cutoff state, we say that they are 
+\shape italic
+leaves
+\shape default
+ of the search graph, and we chose the best move by applying our heuristic
+ to each leaf (and sometimes, to the series of boards leading up to it).
+\end_layout
+
+\end_deeper
+\begin_layout Standard
+
+\series bold
+The Heuristics:
+\end_layout
+
+\begin_layout Itemize
+
+\series bold
+Score:
+\series default
+ The amount of cleared gems (cascade included).
+ When applied to the L-BFS algorithm, we use a variant of this heuristic
+ - the average score per swap in the swap series leading up to a leaf node.
+ This is done since we're aiming to minimize the number of swaps.
+\end_layout
+
+\begin_layout Itemize
+
+\series bold
+Depth: 
+\series default
+The row where the swap was performed (1-based counting from the top of the
+ board).
+ In L-BFS, we take the average depth over the searies of simulated swaps.
+ The motivation to use this value is the fact that deeper swaps cause more
+ gems to move - a deep vertical sequence, when cleared, causes the entire
+ column above it to 
+\begin_inset Quotes eld
+\end_inset
+
+fall down
+\begin_inset Quotes erd
+\end_inset
+
+, whereas a shallow sequence results only in the movement of the new (appearing)
+ gems.
+\end_layout
+
+\begin_layout Itemize
+
+\series bold
+Pairs: 
+\series default
+The number of pairs (adjacent gems of the same type) that remain on the
+ board after the cascade.
+ In L-BFS, this is applied to the last board in the simulation.
+ A board with more pairs is better since it is more promising in terms of
+ future possible moves.
+ The motivation - a board with more pairs is better since it is more promising
+ in terms of future possible moves.
+\end_layout
+
+\begin_layout Itemize
+
+\series bold
+Moves:
+\series default
+ The number of possible future moves in the resulting board.
+ In L-BFS, this is applied to the last board in the simulation.
+ The motivation is similar to the 
+\begin_inset Quotes eld
+\end_inset
+
+Pairs
+\begin_inset Quotes erd
+\end_inset
+
+ heuristic.
+\end_layout
+
+\begin_layout Itemize
+
+\series bold
+Touching
+\series default
+: The number of gems that will have new neighbours after the cascade (i.e.
+ the “frame” of the new appearing gems).
+\end_layout
+
+\begin_layout Subsubsection
+Implementation Issues
+\end_layout
+
+\begin_layout Standard
+
+\end_layout
+
 \begin_layout Section
 Results
 \end_layout
