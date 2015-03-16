@@ -1165,7 +1165,7 @@ Pairs
 Touching
 \series default
 : The number of gems that will have new neighbours after the cascade (i.e.
- the “frame” of the new appearing gems).
+ the “frame” of the new appearing gems), in a 4-neighbors fashion.
 \end_layout
 
 \begin_layout Standard
@@ -1301,8 +1301,8 @@ Test Plan
 \end_layout
 
 \begin_layout Standard
-We carried out a 3-tiered testing scheme, where the first two tiers helped
- us calibrate the algorithms and focus us on the more relevant areas.
+We carried out a 3-tiered testing scheme, where the first two tiers were
+ aimed at calibrating the algorithms for the third, final, testing tier.
  Needless to say, many of the implementation issues previously described
  were solved by these tests.
  We denote our five heuristic by 
@@ -1326,10 +1326,38 @@ We carried out a 3-tiered testing scheme, where the first two tiers helped
 \end_inset
 
  (Touching).
+ We denote their corresponding weights by 
+\begin_inset Formula $ws$
+\end_inset
+
+, 
+\begin_inset Formula $wd$
+\end_inset
+
+, 
+\begin_inset Formula $wp$
+\end_inset
+
+, 
+\begin_inset Formula $wn$
+\end_inset
+
+, and 
+\begin_inset Formula $wt$
+\end_inset
+
+.
+ The vector 
+\begin_inset Formula $\left[ws,\ wd,\ wp,\ wn,\ wt\right]$
+\end_inset
+
+ is a 
+\shape italic
+weight vector.
 \end_layout
 
 \begin_layout Enumerate
-Preliminary Tests
+Preliminary Tests:
 \end_layout
 
 \begin_deeper
@@ -1343,13 +1371,47 @@ Preliminary Tests
 
 \end_deeper
 \begin_layout Enumerate
-Basic Heuristics and Combinations
+Basic Heuristics and Combinations:
+\end_layout
+
+\begin_deeper
+\begin_layout Enumerate
+30 games of HGS, with every 
+\begin_inset Formula $\left[ws,\ wd,\ wp,\ wn,\ wt\right]\in\left\{ 0,1\right\} ^{5}$
+\end_inset
+
+ (i.e, every possible linear combination of the vectors in the canonical
+ basis of 
+\begin_inset Formula $\mathbb{R}^{5}$
+\end_inset
+
+).
+ A total of 
+\begin_inset Formula $30*32=960$
+\end_inset
+
+ games.
 \end_layout
 
 \begin_layout Enumerate
-Weight Calibration
+30 games of L-BFS with the same weights (again, 960 games).
 \end_layout
 
+\end_deeper
+\begin_layout Enumerate
+Weight Calibration:
+\end_layout
+
+\begin_deeper
+\begin_layout Enumerate
+30 games of HGS, with
+\end_layout
+
+\begin_layout Enumerate
+30 games of L-BFS, with 
+\end_layout
+
+\end_deeper
 \begin_layout Section
 Results
 \end_layout
