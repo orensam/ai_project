@@ -305,6 +305,7 @@ cascade
 stable
 \shape default
 .
+ See figure 1for an example.
 \end_layout
 
 \begin_layout Standard
@@ -313,6 +314,16 @@ If there are no valid swaps on the board, we say that we've reached a
 game-over
 \shape default
  state.
+\end_layout
+
+\begin_layout Standard
+\begin_inset Graphics
+	filename cascade.png
+	scale 20
+
+\end_inset
+
+
 \end_layout
 
 \begin_layout Standard
