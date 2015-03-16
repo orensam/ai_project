@@ -212,7 +212,7 @@ target "http://inventwithpython.com/blog/2011/06/24/new-game-source-code-gemgem-
 \end_layout
 
 \begin_layout Subsubsection
-Rules 
+Rules
 \end_layout
 
 \begin_layout Standard
@@ -227,16 +227,16 @@ size
 \begin_inset Formula $4-8$
 \end_inset
 
-; the number of gems can be set in the range 
+; the number of gem types can be set in the range 
 \begin_inset Formula $4-7$
 \end_inset
 
 .
- A player's move (
+ A player's 
 \shape italic
 swap
 \shape default
-) consists of choosing two adjacent gems to switch between.
+ (i.e move) consists of choosing two adjacent gems to switch between.
  We say that a swap is 
 \shape italic
 valid
@@ -305,7 +305,7 @@ cascade
 stable
 \shape default
 .
- See figure 1for an example.
+ See Figure 1 for an example.
 \end_layout
 
 \begin_layout Standard
@@ -317,9 +317,42 @@ game-over
 \end_layout
 
 \begin_layout Standard
+\begin_inset Float figure
+placement H
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\align center
 \begin_inset Graphics
 	filename cascade.png
 	scale 20
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\align center
+
+\shape italic
+\size small
+Figure 1: A starting board is drawn at the top.
+ On the left branch, a demonstration of the resulting cascade (of length
+ 1) when moving the green gem at position 
+\begin_inset Formula $\left(2,3\right)$
+\end_inset
+
+ down.
+ On the right branch, the resulting cascade (of length 2) when moving the
+ green gem at position 
+\begin_inset Formula $\left(3,2\right)$
+\end_inset
+
+ down.
+\end_layout
 
 \end_inset
 
@@ -340,20 +373,17 @@ Assumptions
 \begin_layout Standard
 Under the given rules, there are many ways one could interpret some aspects
  of the game's behaviour.
- We tried to be as straightforward as possible - the 
+ We tried to be as straightforward as possible - the most 
 \shape italic
-simplest
+neat
 \shape default
  interpretation is also the 
 \shape italic
 best
 \shape default
  interpretation.
- Utilizing this approach, the game behaves in 
-\emph on
-the
-\emph default
- following manner:
+ Utilizing this approach, the game's behavior is defined in the following
+ manner:
 \end_layout
 
 \begin_layout Enumerate
@@ -367,7 +397,7 @@ cluster
 \shape default
 (i.e an arbitrary arrangement of consecutive same-colored gems), the board
  is only cleared of gems that form parts of actual sequences.
- Other gems in the cluster are kept on the board.
+ Other gems in the cluster are kept on the board (see Figure 2).
  That is in contrast to some Match-3 variants where a whole cluster is can
  be cleared from the board.
 \end_layout
@@ -383,9 +413,9 @@ The appearing gems (that fill the empty spaces created by cleared sequences)
  prevented from appearing gems to be identically-colored to their neighbors
  on the board.
  When the game is configured such that the number of gem types is small,
- this assumption might cause very long cascades; however, contradicting
- this assumption makes the game almost deterministic, which is an even more
- undesirable trait.
+ this assumption might cause very long cascades; however, violating this
+ assumption makes the game almost deterministic, which is an even more undesirab
+le trait.
 \end_layout
 
 \begin_layout Enumerate
@@ -408,6 +438,49 @@ free
 \end_layout
 
 \begin_layout Standard
+\begin_inset Float figure
+placement H
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\align center
+\begin_inset Graphics
+	filename clusters.png
+	scale 25
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\align center
+
+\shape italic
+\size small
+Figure 2: A starting board is drawn at the top.
+ On the left branch, the resulting sequence (of size 3) when moving the
+ red gem at position 
+\begin_inset Formula $\left(3,3\right)$
+\end_inset
+
+ right.
+ On the right branch, the resulting red cluster (of size 5) and blue sequence
+ (of size 3) when moving the blue gem at position 
+\begin_inset Formula $\left(4,3\right)$
+\end_inset
+
+ right.
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
 \begin_inset Formula $ $
 \end_inset
 
@@ -420,29 +493,39 @@ Scoring Method
 
 \begin_layout Standard
 A cascade awards the player 
-\begin_inset Formula $x$
+\begin_inset Formula $p$
 \end_inset
 
  points, where 
-\begin_inset Formula $x$
+\begin_inset Formula $p$
 \end_inset
 
- is equals the number of gems cleared during the cascade.
- For example........
+ is the number of gems cleared during the cascade.
+ For example, in Figure 1, the move presented in the right branch will yield
+ a score of 
+\begin_inset Formula $6$
+\end_inset
+
+.
+ Similarly, the right branch in Figure 2 will yield a score of 
+\begin_inset Formula $8$
+\end_inset
+
+.
 \end_layout
 
 \begin_layout Standard
-############
-\end_layout
+We emphasize that it's 
+\shape italic
+at least
+\shape default
+ 
+\begin_inset Formula $p$
+\end_inset
 
-\begin_layout Standard
-#############
-\end_layout
-
-\begin_layout Standard
-We emphasize that it's at least s points because of assumption 2 mentioned
- before - appearing gems are randomized, therefore they can make the cascade
- longer than one can predict, and clear more gems from the board.
+ points because of assumption 2 mentioned before - appearing gems are randomized
+, therefore they can make the cascade longer than one can predict, and clear
+ more gems from the board.
 \end_layout
 
 \begin_layout Subsection
@@ -528,8 +611,29 @@ Two papers, both published in March 2014, took on proving that problems
 \end_layout
 
 \begin_layout Standard
-The first such paper, by Guala, Leucci and Natale, defines 5 such problems
- (denoted Q1 through Q5).
+The first paper, by Guala, Leucci and Natale
+\begin_inset Foot
+status open
+
+\begin_layout Plain Layout
+Gualà, L., Leucci, S., & Natale, E.
+ (2014).
+ Bejeweled, Candy Crush and other Match-Three Games are (NP-) Hard.
+ arXiv preprint arXiv:1403.5830.
+ Full PDF here: 
+\begin_inset CommandInset href
+LatexCommand href
+name "http://arxiv.org/abs/1403.5830"
+target "http://arxiv.org/abs/1403.5830"
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+, defines 5 such problems (denoted Q1 through Q5).
  The first of which (Q1) is formulated in the following manner: 
 \shape italic
 Is there a sequence of moves that allows the player to pop a specific gem?
@@ -543,7 +647,7 @@ The authors then go on to prove that Q1 is NP-Complete.
 \begin_layout Standard
 Q3 is of special interest to us, and is formulated as such: 
 \shape italic
-Can the player get a score of at least x in less than k moves? 
+Can the player get a score of at least c in less than k moves? 
 \shape default
 This problem is very similar to our problem (P1), and we can perform a simple
  decision-to-search reduction from Q3 to P1: If we are to minimize the number
@@ -570,8 +674,37 @@ This problem is very similar to our problem (P1), and we can perform a simple
  In a very similar approach, we can show that P2 is NP-Complete.
  And, if we utilize Q5 from Guala's paper, we can show that P3 is NP-Complete
  as well.
- It is noteworthy that the second paper, by Walsh, shows that Q3 is NP-Complete,
- too, and does so by formulating a reduction to the 3-SAT problem.
+ It is noteworthy that the second paper, by Walsh
+\begin_inset Foot
+status open
+
+\begin_layout Plain Layout
+Walsh, T.
+ (2014).
+ Candy Crush is NP-hard.
+ arXiv preprint arXiv:1403.1911.
+ Full PDF here: 
+\begin_inset CommandInset href
+LatexCommand href
+name "http://arxiv.org/abs/1403.1911"
+target "http://arxiv.org/abs/1403.1911"
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+, shows that Q3 is NP-Complete, too, and does so by formulating a reduction
+ to the 3-SAT problem.
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula $ $
+\end_inset
+
+
 \end_layout
 
 \begin_layout Subsubsection
@@ -617,14 +750,14 @@ In our tests, the board size
 
 , the proportion of games reaching a premature game-over state (i.e ending
  before the target score is reached) was 
-\begin_inset Formula $\sim\frac{1}{2}$
+\begin_inset Formula $\geq\frac{1}{2}$
 \end_inset
 
 , and this proportion grows as 
 \begin_inset Formula $\nicefrac{s}{g}$
 \end_inset
 
- decreases.
+ decreases (see Figure 3).
  On the other hand, when 
 \begin_inset Formula $\nicefrac{s}{g}$
 \end_inset
@@ -633,8 +766,8 @@ In our tests, the board size
 \begin_inset Formula $2$
 \end_inset
 
-, there are too many valid swaps on the board for our algorithms to have
- a reasonable runtime.
+, the game-over rate decreases dramatically, but there are too many valid
+ swaps on the board for our algorithms to have a reasonable runtime.
  Therefore, we concluded that 
 \begin_inset Formula $s=6$
 \end_inset
@@ -649,19 +782,42 @@ In our tests, the board size
 
 ) is a good compromise - there's a relatively small chance to reach dead-ends
  (game-over states), while the number of valid swaps is small enough that
- we can run thpusands of games in a reasonable amount of time.
+ we can run thousands of games in a reasonable amount of time.
 \end_layout
 
 \begin_layout Standard
-###############
+\begin_inset Float figure
+placement H
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\align center
+\begin_inset Graphics
+	filename /cs/stud/orensam/ai_project/report/sdivg.png
+	scale 35
+
+\end_inset
+
+
 \end_layout
 
-\begin_layout Standard
-###############
+\begin_layout Plain Layout
+\align center
+
+\shape italic
+\size small
+Figure 3: Game-over rate as a function of 
+\begin_inset Formula $\nicefrac{s}{g}$
+\end_inset
+
+
 \end_layout
 
-\begin_layout Standard
-Add Graph of s/g
+\end_inset
+
+
 \end_layout
 
 \begin_layout Section
@@ -777,8 +933,7 @@ In order to represent the problem in search terms, we can define the problem
 The starting point of the graph is the start board.
  This is an abstract definition that will help us think about the problem
  in search terms; it does not, however, capture the non-determinism described
- previously - more on that when we talk about the algorithms required to
- run over this graph.
+ previously - more about this in the Methods section.
  
 \end_layout
 
@@ -823,8 +978,8 @@ Given a board, the algorithm finds all the valid swaps and computes their
  swap itself, without considering the (possibly) resulting cascade.
  The chosen swap is the maximal swap with respect to the direct score; if
  there are several maximal swaps, one of them is chosen at random.
- This algorithm will serve as a good baseline, since as we'll see later,
- it gives a good model for the behaviour of human players.
+ This algorithm serves as a good baseline, since as shown in the Results
+ section, it gives a good model for the behaviour of human players.
 \end_layout
 
 \begin_layout Itemize
@@ -915,6 +1070,12 @@ too uncertain
 \end_inset
 
  to continue looking ahead from.
+ For example, in Figure 1, the last board in the right branch has an uncertainty
+ factor of 
+\begin_inset Formula $u=\frac{d}{s^{2}}=\frac{6}{4^{2}}=0.375$
+\end_inset
+
+.
 \end_layout
 
 \begin_layout Standard
@@ -1007,6 +1168,47 @@ Touching
  the “frame” of the new appearing gems).
 \end_layout
 
+\begin_layout Standard
+\begin_inset Float figure
+placement H
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\align center
+\begin_inset Graphics
+	filename /cs/stud/orensam/ai_project/report/heuristics.png
+	scale 35
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\align center
+
+\shape italic
+\size small
+Figure 4: Starting with the board on the top, we swap the red gem at 
+\begin_inset Formula $\left(2,4\right)$
+\end_inset
+
+ with the green gem at 
+\begin_inset Formula $\left(2,3\right)$
+\end_inset
+
+.
+ The heuristic values for the resulting (bottom) board will be: Score -
+ 3; Depth - 4; Pairs - 4; Moves - 1; and Touching - 7.
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
 \begin_layout Subsubsection
 Implementation Issues
 \end_layout
@@ -1083,7 +1285,7 @@ Intuitively,
 
  too high might make the swap series too long for L-BFS to run in a reasonable
  time.
- We foun that setting 
+ We found that setting 
 \begin_inset Formula $U$
 \end_inset
 
