@@ -55,9 +55,9 @@
 \shortcut idx
 \color #008000
 \end_index
-\leftmargin 1cm
+\leftmargin 1.2cm
 \topmargin 2cm
-\rightmargin 1cm
+\rightmargin 1.2cm
 \bottommargin 2cm
 \secnumdepth -2
 \tocdepth 2
@@ -117,9 +117,14 @@ begin{abstract}
 \end_layout
 
 \begin_layout Standard
-In this work, we propose several search methods in order to provide a solving
- meachnism for a general Match-3 game, such as Candy-Crush, in its simplest
- form.
+In this work, we propose several search methods that solve a general Match-3
+ game (a Candy Crush clone, GemGem).
+ More specifically, we try to minimize the number of swaps in each game
+ needed to reach a targert score.
+ We use three algorithms, two of them utilize heuristic search techniques,
+ and compare the results to the performance of human subjects.
+ We found that these heuristic techniques provide a significant improvement
+ over a basic greedy approach and human performance.
 \end_layout
 
 \begin_layout Standard
@@ -327,7 +332,7 @@ status open
 \align center
 \begin_inset Graphics
 	filename cascade.png
-	scale 20
+	scale 18
 
 \end_inset
 
@@ -448,7 +453,7 @@ status open
 \align center
 \begin_inset Graphics
 	filename clusters.png
-	scale 25
+	scale 20
 
 \end_inset
 
@@ -540,7 +545,7 @@ Once the rules of the game are well-defined, we can take on the mission
 \begin_layout Standard
 There are many natural problems that arise with the given set of rules.
  We've concluded that, from an AI point of view, there are 3 problems that
- would be intersting to tacle:
+ would be intersting to tackle:
 \end_layout
 
 \begin_layout Standard
@@ -583,8 +588,8 @@ Given an
 \end_layout
 
 \begin_layout Standard
-We've chosen to tacle P1; We will later describe possible modifications
- to our approach that could tacle P2 and P3.
+We've chosen to tackle P1; We will later describe possible modifications
+ to our approach that could tackle P2 and P3.
 \end_layout
 
 \begin_layout Standard
@@ -795,8 +800,8 @@ status open
 \begin_layout Plain Layout
 \align center
 \begin_inset Graphics
-	filename /cs/stud/orensam/ai_project/report/sdivg.png
-	scale 35
+	filename sdivg.png
+	scale 30
 
 \end_inset
 
@@ -1178,8 +1183,8 @@ status open
 \begin_layout Plain Layout
 \align center
 \begin_inset Graphics
-	filename /cs/stud/orensam/ai_project/report/heuristics.png
-	scale 35
+	filename heuristics.png
+	scale 30
 
 \end_inset
 
@@ -1310,10 +1315,6 @@ We carried out a 3-tiered testing scheme, where the first two tiers were
 \end_inset
 
  (Score), 
-\begin_inset Formula $hd$
-\end_inset
-
- (Depth), 
 \begin_inset Formula $hp$
 \end_inset
 
@@ -1321,17 +1322,17 @@ We carried out a 3-tiered testing scheme, where the first two tiers were
 \begin_inset Formula $hn$
 \end_inset
 
- (Moves) and 
+ (Moves), 
+\begin_inset Formula $hd$
+\end_inset
+
+ (Depth), and 
 \begin_inset Formula $ht$
 \end_inset
 
  (Touching).
  We denote their corresponding weights by 
 \begin_inset Formula $ws$
-\end_inset
-
-, 
-\begin_inset Formula $wd$
 \end_inset
 
 , 
@@ -1342,18 +1343,26 @@ We carried out a 3-tiered testing scheme, where the first two tiers were
 \begin_inset Formula $wn$
 \end_inset
 
+, 
+\begin_inset Formula $wd$
+\end_inset
+
 , and 
 \begin_inset Formula $wt$
 \end_inset
 
 .
  The vector 
-\begin_inset Formula $\left[ws,\ wd,\ wp,\ wn,\ wt\right]$
+\begin_inset Formula $\left[ws,\ wp,\ wn,\ wd,\ wt\right]$
 \end_inset
 
  is a 
 \shape italic
 weight vector.
+ 
+\shape default
+The following describes the games we ran to test our algorithms; the results
+ are show in the next section.
 \end_layout
 
 \begin_layout Enumerate
@@ -1377,7 +1386,7 @@ Basic Heuristics and Combinations:
 \begin_deeper
 \begin_layout Enumerate
 30 games of HGS, with every 
-\begin_inset Formula $\left[ws,\ wd,\ wp,\ wn,\ wt\right]\in\left\{ 0,1\right\} ^{5}$
+\begin_inset Formula $\left[ws,\ wp,\ wn,\ wd,\ wt\right]\in\left\{ 0,1\right\} ^{5}$
 \end_inset
 
  (i.e, every possible linear combination of the vectors in the canonical
@@ -1386,15 +1395,10 @@ Basic Heuristics and Combinations:
 \end_inset
 
 ).
- A total of 
-\begin_inset Formula $30*32=960$
-\end_inset
-
- games.
 \end_layout
 
 \begin_layout Enumerate
-30 games of L-BFS with the same weights (again, 960 games).
+30 games of L-BFS with the same weights.
 \end_layout
 
 \end_deeper
@@ -1404,11 +1408,31 @@ Weight Calibration:
 
 \begin_deeper
 \begin_layout Enumerate
-30 games of HGS, with
+30 games of HGS: all possible weight vectors 
+\begin_inset Formula $\left[ws,\ wp,\ wn,\ wd,\ wt\right]$
+\end_inset
+
+ over all the weights betwen 
+\begin_inset Formula $0$
+\end_inset
+
+ and 
+\begin_inset Formula $2$
+\end_inset
+
+, in 
+\begin_inset Formula $0.2$
+\end_inset
+
+ intervals (e.g 
+\begin_inset Formula $\left[0.2,0.4,1.8,0.4,0\right]$
+\end_inset
+
+ )
 \end_layout
 
 \begin_layout Enumerate
-30 games of L-BFS, with 
+30 games of L-BFS, with the same weight combinations.
 \end_layout
 
 \end_deeper
@@ -1416,16 +1440,441 @@ Weight Calibration:
 Results
 \end_layout
 
+\begin_layout Standard
+First we show in Figure 5 the basic results (i.e, the average number of swaps
+ required to reach a score of 
+\begin_inset Formula $250$
+\end_inset
+
+, over 30 games) when running each individual heuristic by itself (e.g using
+ a weight vector 
+\begin_inset Formula $\left[0,1,0,0,0\right]$
+\end_inset
+
+).
+ The average results of SGS and human subjects are shown for comparison.
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float figure
+placement H
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\align center
+\begin_inset Graphics
+	filename basic10.png
+	scale 40
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\align center
+
+\shape italic
+\size small
+Figure 5: Avergae results for individual heuristics, with SGS and human
+ averages for comparison.
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+We can easily notice that the Score heuristic is the most prominent, and
+ the Moves and Pairs heuristics are consistently uneffective.
+ The Depth and Touching heuristics are somewhere in between.
+ Note that the same heuristic in the two different algorithms gives a similar
+ outcome (with L-BFS winning by a small margin), except in the Touching
+ heuristic, which behaves very differently.
+ 
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula $ $
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+The above results give a general idea of the effectiveness of each individual
+ heuristic.
+ The next step is to look at their basic combinations - i.e the set of all
+ 
+\begin_inset Quotes eld
+\end_inset
+
+canonical
+\begin_inset Quotes erd
+\end_inset
+
+ weight vectors - 
+\begin_inset Formula $\left\{ 0,1\right\} ^{5}$
+\end_inset
+
+.
+ The results for these tests are shown in Figure 6.
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float figure
+placement H
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\align center
+\begin_inset Graphics
+	filename full_calibration.png
+	scale 45
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\align center
+
+\shape italic
+\size small
+Figure 6: Avergae results for basic heuristic combinations, with SGS and
+ human averages for comparison.
+ 
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+As we saw before, when including the Score heuristic (the top half of the
+ graph in Figure 6), we get generally better results.
+ These results also hinted us that the Moves heuristic might be ineffective,
+ and in fact woresens our results.
+ This ineffectiveness can be seen in the graph presented in Figure 7.
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float figure
+placement H
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\align center
+\begin_inset Graphics
+	filename dropping_nmvoes.png
+	scale 45
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\align center
+
+\shape italic
+\size small
+Figure 7: The average swap count when using the Score heuristic with each
+ of the other four (left) and when using each of the four non-Score heuristics
+ individually (right).
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Indeed, as we can see in Figure 7, the Moves heuristic does not help us,
+ at all, to lower the swap count.
+ Therfore, in the weight calibraion process, we decided to omit it in further
+ testing.
+ In the next and final step, we performed a weight calibration, in order
+ to find the best weight vector (with 
+\begin_inset Formula $wn$
+\end_inset
+
+ zeroed out).
+ Figure 8 shows the top 10 heuristic combinations.
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float figure
+placement H
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\align center
+\begin_inset Graphics
+	filename top10.png
+	scale 45
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\align center
+
+\shape italic
+\size small
+Figure 8: The top 10 heuristics and their average swap count.
+ SGS and human results are too far out to show (at 25.2 and 28.8, respectively)
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+We now proceed to analyze the above results.
+\end_layout
+
 \begin_layout Section
 Analysis
+\end_layout
+
+\begin_layout Standard
+When looking at the top 10 heuristic combinations, we can first see that
+ L-BFS has a small advantage over HGS - 6 of the top 10 (and 4 of the top
+ 5) combinations utilize L-BFS.
+ Moreover, the top 2 combinations are L-BFS.
+ When looking at the numbers, achieving a swap count of less than 
+\begin_inset Formula $16$
+\end_inset
+
+ means that these algorithms averaged over 
+\begin_inset Formula $15.7$
+\end_inset
+
+ points per move.
+ This is a very good result - it means that, in average, these algorithms
+ cleared 
+\begin_inset Formula $44\%$
+\end_inset
+
+ of the board in every swap.
+ For comparison, human subjects averaged 
+\begin_inset Formula $8.9$
+\end_inset
+
+ points per move (clearing only 
+\begin_inset Formula $24\%$
+\end_inset
+
+ of the board, on average), 
+\begin_inset Formula $\sim43\%$
+\end_inset
+
+ less
+\end_layout
+
+\begin_layout Standard
+It is obvious that the 
+\begin_inset Formula $hs$
+\end_inset
+
+ value is the most important factor, followed by the 
+\begin_inset Formula $hd$
+\end_inset
+
+ value.
+ This makes sense - we're aiming to minimize the number of swaps to reach
+ a certain score, therefore we're aiming to maximize the score of each swap.
+ As any beginner Candy Crush player could tell - nothing beats a high scoring
+ move with a long cascade.
+ That being said, using 
+\begin_inset Formula $hs$
+\end_inset
+
+ alone comes in at a close second, after a combination using 
+\begin_inset Formula $hs$
+\end_inset
+
+, 
+\begin_inset Formula $hp$
+\end_inset
+
+, 
+\begin_inset Formula $hd$
+\end_inset
+
+ and 
+\begin_inset Formula $ht$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+The prominence of 
+\begin_inset Formula $hs$
+\end_inset
+
+ is more apparent in L-BFS than in HGS - since L-BFS foresees several steps
+ into the future, and therefore is able to chose the swap with the best
+ score in its horizon.
+ HGS, on the other hand, gains a larger benefit from the help of other predictio
+ns, such as the 
+\begin_inset Formula $hp$
+\end_inset
+
+ and 
+\begin_inset Formula $ht$
+\end_inset
+
+ values, since 
+\begin_inset Formula $hs$
+\end_inset
+
+ on its own is not a good enough predictor when looking only one step ahead.
+ 
+\end_layout
+
+\begin_layout Standard
+If we take a step back and observe the graph in Figure 5, we see an anomaly
+ mentioned before, regarding the 
+\begin_inset Formula $ht$
+\end_inset
+
+ value - when used by itself, it yields good results when using HGS, in
+ contrast to very bad results when used in L-BFS.
+ It is the only heuristic value which presents this pattern.
+ Our explanation for this behaviour is the chaotic nature of the 
+\begin_inset Formula $ht$
+\end_inset
+
+ value, when looking more than one step ahead.
+ In HGS, the 
+\begin_inset Formula $ht$
+\end_inset
+
+ value is the deterministic number neighbors that the appearing gems will
+ have after the move is performed; while in L-BFS, the 
+\begin_inset Formula $ht$
+\end_inset
+
+ value of a swap is associated with the last board in the series of swaps,
+ where the 
+\begin_inset Quotes eld
+\end_inset
+
+frame
+\begin_inset Quotes erd
+\end_inset
+
+ for the appearing gems might be very different.
+ This is in contrast, for example, to the 
+\begin_inset Formula $hp$
+\end_inset
+
+ value, where most pairs that exist on the last board in the swap series
+ will probably remain there after performing the swaps.
+\end_layout
+
+\begin_layout Standard
+Revisiting Figure 7, we want to explain the anomaly of 
+\begin_inset Formula $hn$
+\end_inset
+
+ (Move heurstic) being an ineffective heuristic.
+ Prior to the actual tests, 
+\begin_inset Formula $hn$
+\end_inset
+
+ seemed to us as an efficient heuristic since a board with more valid swaps
+ is a more “promising” board, in terms of the number of choices we can make.
+ But as in life itself, the 
+\shape italic
+paradox of choice
+\shape default
+ appears also in GemGem, and the results showed us that a board with more
+ moves isn't, in fact, better.
+ This has two reasons.
+ First, high-scoring moves result in boards with fewer gems, and boards
+ with fewer gems generally contain less valid swaps - so using a high 
+\begin_inset Formula $wn$
+\end_inset
+
+ value actually causes the algorithms to chose lower-scoring moves.
+ Second, the amount of moves isn't in coordination with their quality; for
+ example one could easily image a board with 2 possible moves in which the
+ first yeilds a board with k>1 3-point moves and the second yields a board
+ with one 15-points move - chosing the first move ins't better.
 \end_layout
 
 \begin_layout Section
 Conclusions
 \end_layout
 
-\begin_layout Section
-Future Research
+\begin_layout Standard
+Observing the outcomes of out tests, we were glad to see that a computer
+ algorithm can be significantly better than humans in Candy Crush - this
+ shows that it is not only a game of luck, but also of strategy and calculation.
+ Given different prediction abilities, and utilizing a variety of heuristic
+ calculations, the computer's results can vary widely, sometimes for the
+ better, and sometims for the worse.
+ We saw that, unsurprisingly, when trying to maximiz the score of a swap,
+ using a score-based heuristic yields the best results.
+ However, other heuristic value, associated with the placement of a swap
+ on the board and the characteristics of the board resulting from the swap,
+ can have a positive effect on the result, especially when performing a
+ one-step prediction.
+\end_layout
+
+\begin_layout Standard
+As for further research, there's a lot that is left to uncover.
+ First, regarding the problem settings - we chose a specific board size
+ and number of gem types.
+ Even though changing these values keeps the main idea of the problem the
+ same, it might be the case that our algorithms and heuristics will produce
+ very different results.
+ Our code easily supports this kind of modification, and one could easily
+ take it from here.
+\end_layout
+
+\begin_layout Standard
+Second.
+ regarding the problem definition - as shown before, there are many problems
+ that can be defined using the basic Match-3 rules.
+ We chose to minimize swaps to achieve a score, and the dual problem of
+ maximizing the score within a swap limit is probably similar, since both
+ problems aim to maximize the score-per-swap ratio.
+ The third problem we described, however, is substiantialy different - maximize
+ the number of swaps without reaching game-over.
+ In this problem the score doesn't really count, so the methods we could
+ use to tackle it might be different - for example, the Moves heuristic
+ might perform well in this case.
+ It is also much more interesting in boards with a high 
+\begin_inset Formula $\nicefrac{s}{g}$
+\end_inset
+
+ factor, as we saw previously.
+\end_layout
+
+\begin_layout Standard
+Third, even the simplest Candy Crush levels offer more complex challenges
+ than maximizing score - non-rectangular boards, popping specific gems,
+ special combo-candies which can pop the gems around them, and many others.
+ Each of these challenges can be a reseach subject in itself.
 \end_layout
 
 \end_body
