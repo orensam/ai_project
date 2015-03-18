@@ -264,13 +264,13 @@ sequence
 placement h
 wide false
 sideways false
-status collapsed
+status open
 
 \begin_layout Plain Layout
 \align center
 \begin_inset Graphics
 	filename cascade.png
-	scale 25
+	scale 24
 
 \end_inset
 
@@ -283,8 +283,8 @@ status collapsed
 \shape italic
 \size small
 Figure 1: A starting board is drawn at the top.
- On the left branch, a demonstration of the resulting cascade (of length
- 1) when moving the green gem at position 
+ On the left branch, the resulting cascade (of length 1) when moving the
+ green gem at position 
 \begin_inset Formula $\left(2,3\right)$
 \end_inset
 
@@ -297,6 +297,20 @@ Figure 1: A starting board is drawn at the top.
  down.
 \end_layout
 
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula $ $
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula $ $
 \end_inset
 
 
