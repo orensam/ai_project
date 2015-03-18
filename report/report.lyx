@@ -120,7 +120,7 @@ begin{abstract}
 In this work, we propose several search methods that solve a general Match-3
  game (a Candy Crush clone, GemGem).
  More specifically, we try to minimize the number of swaps in each game
- needed to reach a targert score.
+ needed to reach a target score.
  We use three algorithms, two of them utilize heuristic search techniques,
  and compare the results to the performance of human subjects.
  We found that these heuristic techniques provide a significant improvement
@@ -159,8 +159,8 @@ nt became a publicly traded company, valued at over $7 Billion.
  Facebook and on mobile platforms.
  This was another milestone in the evolution of Match-3 video games (a subset
  of the more general Tile Matching category of games), which finds its roots
- in the well-known Tetris (1985), goes through games like Yoshi’s Cookie
- (1992) and Bejewled (2001), and is still present today, as King Digital
+ in the well-known Tetris (1985), goes through games like Yoshi's Cookie
+ (1992) and Bejeweled (2001), and is still present today, as King Digital
  releases new levels for Candy Crush Saga on a weekly basis.
  Match-3 is family of single-player video games; The basic, common elements
  are a game board (usually square or rectangular in shape) and bricks of
@@ -254,9 +254,52 @@ sequence
 \begin_inset Formula $3$
 \end_inset
 
- or more consecutive gems of the same color.
+ or more consecutive gems of the same type.
  An invalid swap is not allowed.
  
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float figure
+placement h
+wide false
+sideways false
+status collapsed
+
+\begin_layout Plain Layout
+\align center
+\begin_inset Graphics
+	filename cascade.png
+	scale 25
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\align center
+
+\shape italic
+\size small
+Figure 1: A starting board is drawn at the top.
+ On the left branch, a demonstration of the resulting cascade (of length
+ 1) when moving the green gem at position 
+\begin_inset Formula $\left(2,3\right)$
+\end_inset
+
+ down.
+ On the right branch, the resulting cascade (of length 2) when moving the
+ green gem at position 
+\begin_inset Formula $\left(3,2\right)$
+\end_inset
+
+ down.
+\end_layout
+
+\end_inset
+
+
 \end_layout
 
 \begin_layout Standard
@@ -322,49 +365,6 @@ game-over
 \end_layout
 
 \begin_layout Standard
-\begin_inset Float figure
-placement H
-wide false
-sideways false
-status open
-
-\begin_layout Plain Layout
-\align center
-\begin_inset Graphics
-	filename cascade.png
-	scale 18
-
-\end_inset
-
-
-\end_layout
-
-\begin_layout Plain Layout
-\align center
-
-\shape italic
-\size small
-Figure 1: A starting board is drawn at the top.
- On the left branch, a demonstration of the resulting cascade (of length
- 1) when moving the green gem at position 
-\begin_inset Formula $\left(2,3\right)$
-\end_inset
-
- down.
- On the right branch, the resulting cascade (of length 2) when moving the
- green gem at position 
-\begin_inset Formula $\left(3,2\right)$
-\end_inset
-
- down.
-\end_layout
-
-\end_inset
-
-
-\end_layout
-
-\begin_layout Standard
 \begin_inset Formula $ $
 \end_inset
 
@@ -377,7 +377,7 @@ Assumptions
 
 \begin_layout Standard
 Under the given rules, there are many ways one could interpret some aspects
- of the game's behaviour.
+ of the game's behavior.
  We tried to be as straightforward as possible - the most 
 \shape italic
 neat
@@ -444,16 +444,16 @@ free
 
 \begin_layout Standard
 \begin_inset Float figure
-placement H
+placement h
 wide false
 sideways false
-status open
+status collapsed
 
 \begin_layout Plain Layout
 \align center
 \begin_inset Graphics
 	filename clusters.png
-	scale 20
+	scale 30
 
 \end_inset
 
@@ -545,7 +545,7 @@ Once the rules of the game are well-defined, we can take on the mission
 \begin_layout Standard
 There are many natural problems that arise with the given set of rules.
  We've concluded that, from an AI point of view, there are 3 problems that
- would be intersting to tackle:
+ would be interesting to tackle:
 \end_layout
 
 \begin_layout Standard
@@ -560,7 +560,7 @@ Given an
 \begin_inset Formula $s\times s$
 \end_inset
 
- Match-3 board containg 
+ Match-3 board containing 
 \begin_inset Formula $g$
 \end_inset
 
@@ -792,16 +792,16 @@ In our tests, the board size
 
 \begin_layout Standard
 \begin_inset Float figure
-placement H
+placement h
 wide false
 sideways false
-status open
+status collapsed
 
 \begin_layout Plain Layout
 \align center
 \begin_inset Graphics
 	filename sdivg.png
-	scale 30
+	scale 36
 
 \end_inset
 
@@ -825,6 +825,13 @@ Figure 3: Game-over rate as a function of
 
 \end_layout
 
+\begin_layout Standard
+\begin_inset Formula $ $
+\end_inset
+
+
+\end_layout
+
 \begin_layout Section
 Approach and Methods
 \end_layout
@@ -837,7 +844,7 @@ Why Search?
 Generally speaking, the problem at hand requires us, given a game board,
  to choose a minimal series of swaps which will beat a certain score.
  The natural approach to this kind of problem, which we indeed chose, is
- to use search teqchniques - where the state space is the set of all possible
+ to use search techniques - where the state space is the set of all possible
  boards, and the transitions are valid swaps that form a transition from
  one state to another.
  Another somewhat natural approach is to use learning techniques - however,
@@ -928,7 +935,7 @@ In order to represent the problem in search terms, we can define the problem
 \end_inset
 
  and 
-\begin_inset Formula $E=\left\{ e=\left\langle v_{1},v_{2}\right\rangle \ :\ v_{1},v_{2}\in V\text{ and }e\text{ is a swap that yields }v_{2}\text{ from }v_{1}\right\} $
+\begin_inset Formula $E=\left\{ e=\left\langle v_{1},v_{2}\right\rangle \ :\ v_{1},v_{2}\in V\text{; }e\text{ is a swap that yields }v_{2}\text{ from }v_{1}\right\} $
 \end_inset
 
 .
@@ -984,7 +991,7 @@ Given a board, the algorithm finds all the valid swaps and computes their
  The chosen swap is the maximal swap with respect to the direct score; if
  there are several maximal swaps, one of them is chosen at random.
  This algorithm serves as a good baseline, since as shown in the Results
- section, it gives a good model for the behaviour of human players.
+ section, it gives a good model for the behavior of human players.
 \end_layout
 
 \begin_layout Itemize
@@ -1056,7 +1063,7 @@ denote
 \shape italic
 uncertainty factor
 \shape default
- of the board - it represnts the percentage of the board which is unknown
+ of the board - it represents the percentage of the board which is unknown
  to us.
  Therefore, if 
 \begin_inset Formula $u$
@@ -1117,7 +1124,7 @@ Depth:
 \series default
 The row where the swap was performed (1-based counting from the top of the
  board).
- In L-BFS, we take the average depth over the searies of simulated swaps.
+ In L-BFS, we take the average depth over the series of simulated swaps.
  The motivation to use this value is the fact that deeper swaps cause more
  gems to move - a deep vertical sequence, when cleared, causes the entire
  column above it to 
@@ -1169,7 +1176,7 @@ Pairs
 \series bold
 Touching
 \series default
-: The number of gems that will have new neighbours after the cascade (i.e.
+: The number of gems that will have new neighbors after the cascade (i.e.
  the “frame” of the new appearing gems), in a 4-neighbors fashion.
 \end_layout
 
@@ -1178,7 +1185,7 @@ Touching
 placement H
 wide false
 sideways false
-status open
+status collapsed
 
 \begin_layout Plain Layout
 \align center
@@ -1230,13 +1237,12 @@ Simulation of Appearing Gems:
  into account when looking for swaps in a future board; On the other hand,
  we can view the cleared cells as empty, and opt to use only the gems that
  we know for certain will exist in that board.
- In favour of the first approach is the fact that it yields more future
- swap options, that are likely to be similar to the actual future boards;
- Moreover, it would be possible to eliminate the use of the limited uncertainty
- factor.
- In favour of the second one is the fact that every predicted move will
- almost certainly be a valid future move - as opposed to the first approach,
- where we might predict moves in a board that will never actually exist.
+ In favor of the first approach is the fact that it yields more future swap
+ options, that are likely to be similar to the actual future boards; Moreover,
+ it would be possible to eliminate the use of the limited uncertainty factor.
+ In favor of the second one is the fact that every predicted move will almost
+ certainly be a valid future move - as opposed to the first approach, where
+ we might predict moves in a board that will never actually exist.
  We ruled in favor of the second approach, as it makes our heuristics admissible
 , and avoids the exaggerated promotion high-scoring imaginary swaps that
  will not be valid in actual future boards.
@@ -1412,7 +1418,7 @@ Weight Calibration:
 \begin_inset Formula $\left[ws,\ wp,\ wn,\ wd,\ wt\right]$
 \end_inset
 
- over all the weights betwen 
+ over all the weights between 
 \begin_inset Formula $0$
 \end_inset
 
@@ -1453,20 +1459,30 @@ First we show in Figure 5 the basic results (i.e, the average number of swaps
 
 ).
  The average results of SGS and human subjects are shown for comparison.
+ 
+\end_layout
+
+\begin_layout Standard
+We can easily notice that the Score heuristic is the most prominent, and
+ the Moves and Pairs heuristics are consistently ineffective.
+ The Depth and Touching heuristics are somewhere in between.
+ Note that the same heuristic in the two different algorithms gives a similar
+ outcome (with L-BFS winning by a small margin), except in the Touching
+ heuristic, which behaves very differently.
+ 
 \end_layout
 
 \begin_layout Standard
 \begin_inset Float figure
-placement H
 wide false
 sideways false
-status open
+status collapsed
 
 \begin_layout Plain Layout
 \align center
 \begin_inset Graphics
 	filename basic10.png
-	scale 40
+	scale 45
 
 \end_inset
 
@@ -1478,7 +1494,7 @@ status open
 
 \shape italic
 \size small
-Figure 5: Avergae results for individual heuristics, with SGS and human
+Figure 5: Average results for individual heuristics, with SGS and human
  averages for comparison.
 \end_layout
 
@@ -1488,17 +1504,33 @@ Figure 5: Avergae results for individual heuristics, with SGS and human
 \end_layout
 
 \begin_layout Standard
-We can easily notice that the Score heuristic is the most prominent, and
- the Moves and Pairs heuristics are consistently uneffective.
- The Depth and Touching heuristics are somewhere in between.
- Note that the same heuristic in the two different algorithms gives a similar
- outcome (with L-BFS winning by a small margin), except in the Touching
- heuristic, which behaves very differently.
+\begin_inset Float figure
+placement H
+wide false
+sideways false
+status collapsed
+
+\begin_layout Plain Layout
+\align center
+\begin_inset Graphics
+	filename full_calibration.png
+	scale 57
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\align center
+
+\shape italic
+\size small
+Figure 6: Average results for basic heuristic combinations, with SGS and
+ human averages for comparison.
  
 \end_layout
 
-\begin_layout Standard
-\begin_inset Formula $ $
 \end_inset
 
 
@@ -1525,44 +1557,15 @@ canonical
 \end_layout
 
 \begin_layout Standard
-\begin_inset Float figure
-placement H
-wide false
-sideways false
-status open
-
-\begin_layout Plain Layout
-\align center
-\begin_inset Graphics
-	filename full_calibration.png
-	scale 45
-
-\end_inset
-
-
-\end_layout
-
-\begin_layout Plain Layout
-\align center
-
-\shape italic
-\size small
-Figure 6: Avergae results for basic heuristic combinations, with SGS and
- human averages for comparison.
- 
-\end_layout
-
-\end_inset
-
-
-\end_layout
-
-\begin_layout Standard
 As we saw before, when including the Score heuristic (the top half of the
  graph in Figure 6), we get generally better results.
  These results also hinted us that the Moves heuristic might be ineffective,
- and in fact woresens our results.
+ and in fact worsens our results.
  This ineffectiveness can be seen in the graph presented in Figure 7.
+ Indeed, as we can see in Figure 7, the Moves heuristic does not help us,
+ at all, to lower the swap count.
+ Therefore, in the weight calibration process, we decided to omit it in
+ further testing.
 \end_layout
 
 \begin_layout Standard
@@ -1570,7 +1573,7 @@ As we saw before, when including the Score heuristic (the top half of the
 placement H
 wide false
 sideways false
-status open
+status collapsed
 
 \begin_layout Plain Layout
 \align center
@@ -1599,25 +1602,11 @@ Figure 7: The average swap count when using the Score heuristic with each
 \end_layout
 
 \begin_layout Standard
-Indeed, as we can see in Figure 7, the Moves heuristic does not help us,
- at all, to lower the swap count.
- Therfore, in the weight calibraion process, we decided to omit it in further
- testing.
- In the next and final step, we performed a weight calibration, in order
- to find the best weight vector (with 
-\begin_inset Formula $wn$
-\end_inset
-
- zeroed out).
- Figure 8 shows the top 10 heuristic combinations.
-\end_layout
-
-\begin_layout Standard
 \begin_inset Float figure
 placement H
 wide false
 sideways false
-status open
+status collapsed
 
 \begin_layout Plain Layout
 \align center
@@ -1642,6 +1631,16 @@ Figure 8: The top 10 heuristics and their average swap count.
 \end_inset
 
 
+\end_layout
+
+\begin_layout Standard
+In the next and final step, we performed a weight calibration, in order
+ to find the best weight vector (with 
+\begin_inset Formula $wn$
+\end_inset
+
+ zeroed out).
+ Figure 8 shows the top 10 heuristic combinations.
 \end_layout
 
 \begin_layout Standard
@@ -1758,7 +1757,7 @@ If we take a step back and observe the graph in Figure 5, we see an anomaly
  value - when used by itself, it yields good results when using HGS, in
  contrast to very bad results when used in L-BFS.
  It is the only heuristic value which presents this pattern.
- Our explanation for this behaviour is the chaotic nature of the 
+ Our explanation for this behavior is the chaotic nature of the 
 \begin_inset Formula $ht$
 \end_inset
 
@@ -1795,7 +1794,7 @@ Revisiting Figure 7, we want to explain the anomaly of
 \begin_inset Formula $hn$
 \end_inset
 
- (Move heurstic) being an ineffective heuristic.
+ (Move heuristic) being an ineffective heuristic.
  Prior to the actual tests, 
 \begin_inset Formula $hn$
 \end_inset
@@ -1817,8 +1816,8 @@ paradox of choice
  value actually causes the algorithms to chose lower-scoring moves.
  Second, the amount of moves isn't in coordination with their quality; for
  example one could easily image a board with 2 possible moves in which the
- first yeilds a board with k>1 3-point moves and the second yields a board
- with one 15-points move - chosing the first move ins't better.
+ first yields a board with k>1 3-point moves and the second yields a board
+ with one 15-points move - choosing the first move isn't better.
 \end_layout
 
 \begin_layout Section
@@ -1831,8 +1830,8 @@ Observing the outcomes of out tests, we were glad to see that a computer
  shows that it is not only a game of luck, but also of strategy and calculation.
  Given different prediction abilities, and utilizing a variety of heuristic
  calculations, the computer's results can vary widely, sometimes for the
- better, and sometims for the worse.
- We saw that, unsurprisingly, when trying to maximiz the score of a swap,
+ better, and sometimes for the worse.
+ We saw that, unsurprisingly, when trying to maximize the score of a swap,
  using a score-based heuristic yields the best results.
  However, other heuristic value, associated with the placement of a swap
  on the board and the characteristics of the board resulting from the swap,
@@ -1858,7 +1857,7 @@ Second.
  We chose to minimize swaps to achieve a score, and the dual problem of
  maximizing the score within a swap limit is probably similar, since both
  problems aim to maximize the score-per-swap ratio.
- The third problem we described, however, is substiantialy different - maximize
+ The third problem we described, however, is substantially different - maximize
  the number of swaps without reaching game-over.
  In this problem the score doesn't really count, so the methods we could
  use to tackle it might be different - for example, the Moves heuristic
@@ -1874,7 +1873,7 @@ Second.
 Third, even the simplest Candy Crush levels offer more complex challenges
  than maximizing score - non-rectangular boards, popping specific gems,
  special combo-candies which can pop the gems around them, and many others.
- Each of these challenges can be a reseach subject in itself.
+ Each of these challenges can be a research subject in itself.
 \end_layout
 
 \end_body
