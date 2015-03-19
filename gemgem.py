@@ -1082,7 +1082,7 @@ if __name__ == '__main__':
                       type="int", dest="GEM_NUM", default=4,
                       help="Number of gem types (4..7)")
     parser.add_option("-c", "--score",
-                      type="int", dest="GOAL", default=100,
+                      type="int", dest="GOAL", default=250,
                       help="Target (limit) score")
     parser.add_option("-f", "--fps",
                       type="int", dest="USER_FPS", default=30,
@@ -1092,7 +1092,7 @@ if __name__ == '__main__':
                       help="Number of games to run. Set to 0 to run forever")
     parser.add_option("-O", "--output",
                       type="string", dest="LOGFILE", default="gemgem_log.csv",
-                      help="Log file name")
+                      help="Log file name. Output format is CSV")
     parser.add_option("-q", "--no-graphics",
                       action="store_true", dest="NO_GRAPHICS", default=False,
                       help="Run game(s) without graphics")
