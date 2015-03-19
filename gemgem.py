@@ -84,6 +84,7 @@ ALGOS = {1:STUPID_GREEDY, 2:SMART_GREEDY, 3:LBFS}
 GOAL_SCORE = 100
 SEND_MULTIPLE = False
 
+J = False
 
 class BoardMove(object):
 
@@ -405,7 +406,13 @@ def main(is_manual, random_fall, ngames, algo, weights, no_graphics, logfile):
     # Load the images
     GEMIMAGES = []
     for i in range(1, NUMGEMIMAGES+1):
+
         gemImage = pygame.image.load('gem%s.png' % i)
+
+        # Easter egg
+        if J and i==1:
+            gemImage = pygame.image.load('gem8.png')
+
         if gemImage.get_size() != (GEMIMAGESIZE, GEMIMAGESIZE):
             gemImage = pygame.transform.smoothscale(gemImage, (GEMIMAGESIZE, GEMIMAGESIZE))
         GEMIMAGES.append(gemImage)
@@ -1073,6 +1080,9 @@ if __name__ == '__main__':
     parser.add_option("-w", "--weights",
                       type="string", dest="WEIGHTS", default="1 1 1 1 1",
                       help="Weights: [Score, Pairs, Moves, Depth, Touching]")
+    parser.add_option("-j",
+                      action="store_true", dest="JJ", default=False,
+                      help="Who knows?")
 
     (options, args) = parser.parse_args()
 
@@ -1080,6 +1090,7 @@ if __name__ == '__main__':
     NUMGEMIMAGES = options.GEM_NUM
     GOAL_SCORE = options.GOAL
     FPS = options.USER_FPS
+    J = options.JJ
 
     if BOARDWIDTH < 4 or BOARDWIDTH > 8:
         print "Board size must be in the range 4..8"
