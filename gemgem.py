@@ -3,6 +3,11 @@
 # http://inventwithpython.com/pygame
 # Released under a "Simplified BSD" license
 
+# Game Modifications and solving algorithms
+# by Daniel Hadar & Oren Samuel
+# Written for 2014-2015 Intro to AI course
+# Hebrew University of Jerusalem
+
 """
 This program has "gem data structures", which are basically dictionaries
 with the following keys:
@@ -123,6 +128,7 @@ class BoardMove(object):
             return 1
         return 0
 
+
 class FringeState(object):
     def __init__(self, board, moves=[], total_move_num=0, total_score=0):
         self.board = board
@@ -149,6 +155,7 @@ class FringeState(object):
         if my_score > other_score:
             return 1
         return 0
+
 
 class Solver(object):
 
@@ -228,8 +235,6 @@ class Solver(object):
         return fringe_state.total_score >= GOAL_SCORE
 
     def isUncertain(self, fs):
-        #import pdb; pdb.set_trace()
-        #uncertainty = reduce(lambda s1, s2: s1 + s2, board).count(-1) / float((BOARDHEIGHT * BOARDWIDTH))
         uncertainty = sum([m.score for m in fs.moves]) / float((BOARDHEIGHT * BOARDWIDTH))
         if uncertainty > self.uncertainty_thres:
             return True
@@ -259,7 +264,6 @@ class Solver(object):
             # print "BEST:"
             # print best
             # print
-            # import pdb; pdb.set_trace()
             return [best]
         else:
             return []
@@ -268,19 +272,10 @@ class Solver(object):
 
         moves = self.getPossibleMoves(board, cascade=True)
 
-        # if len(moves) >= 15:
-        #     print "Breaking!!!!"
-        #     random.shuffle(moves)
-        #     best = max(moves, key=lambda m: m.score)
-        #     return [best]
-
         if moves:
             random.shuffle(moves)
             best = max(moves, key=lambda m: self.getMoveHeuristic(m))
 
-            # h_nmoves = self.w_nmoves * self.getMoveNumber(best.dest_board) if self.w_nmoves else 0
-            # print "Best nmoves: %d" %h_nmoves
-            # print
             # print "MOVES:"
             # for move in moves:
             #     print move
@@ -288,7 +283,6 @@ class Solver(object):
             # print "BEST:"
             # print best
             # print
-            # import pdb; pdb.set_trace()
             return [best]
         else:
             return []
@@ -296,8 +290,6 @@ class Solver(object):
     def getMoveHeuristic(self, move):
 
         dest_board = move.dest_board
-        # source_board = move.source_board
-        # cur_nmoves = self.getMoveNumber(source_board)
 
         h_score = self.w_score * move.score if self.w_score else 0
         h_pairs = self.w_pairs * self.getPairs(dest_board) if self.w_pairs else 0
@@ -337,7 +329,6 @@ class Solver(object):
 
         res = h_score + h_pairs + h_nmoves + h_depth + h_touching
         return res
-
 
     #### Heuristics ####
 
@@ -472,7 +463,6 @@ def main(is_manual, random_fall, ngames, algo, weights, no_graphics, logfile):
             print
             game_counter += 1
         except KeyboardInterrupt:
-            #file_obj.close()
             break
 
     print "Finished %d games." %(game_counter-1)
@@ -504,7 +494,6 @@ def log(logfile, score, moves, solver, seconds):
     file_obj = open(logfile, 'a')
     file_obj.write(line + '\n')
     file_obj.close()
-
 
 def runGame(is_manual=False, game_solver=None, no_graphics=False):
     # Plays through a single game. When the game is over, this function returns.
@@ -543,7 +532,6 @@ def runGame(is_manual=False, game_solver=None, no_graphics=False):
                 # print "Swap list:"
                 # for move in swap_list: print move
                 # print
-                #import pdb; pdb.set_trace()
 
             if not swap_list:
                 firstSelectedGem = None
@@ -662,7 +650,6 @@ def perform_single_move(gameBoard, firstSwappingGem, secondSwappingGem, score=0,
         fillBoardAndAnimate(gameBoard, [], score, moves, simulation, random_fall)
     return gameBoard, score
 
-
 def perform_move(gameBoard, firstSwappingGem, secondSwappingGem, score=0, moves=0, simulation=True, random_fall=False):
     # Show the swap animation on the screen.
 
@@ -724,7 +711,6 @@ def perform_move(gameBoard, firstSwappingGem, secondSwappingGem, score=0, moves=
             #     printBoard(gameBoard)
 
             # Check if there are any new matches.
-            # import pdb; pdb.set_trace()
             matchedGems = findMatchingGems(gameBoard)
 
     return gameBoard, score
@@ -758,14 +744,12 @@ def getSwappingGems(board, firstXY, secondXY):
         return None, None
     return firstGem, secondGem
 
-
 def getBlankBoard():
     # Create and return a blank board data structure.
     board = []
     for x in range(BOARDWIDTH):
         board.append([EMPTY_SPACE] * BOARDHEIGHT)
     return board
-
 
 def canMakeMove(board):
     # Return True if the board is in a state where a matching
@@ -812,7 +796,6 @@ def canMakeMove(board):
                     return True # return True the first time you find a pattern
     return False
 
-
 def drawMovingGem(gem, progress):
     # Draw a gem sliding in the direction that its 'direction' key
     # indicates. The progress parameter is a number from 0 (just
@@ -841,7 +824,6 @@ def drawMovingGem(gem, progress):
     r = pygame.Rect( (pixelx + movex, pixely + movey, GEMIMAGESIZE, GEMIMAGESIZE) )
     DISPLAYSURF.blit(GEMIMAGES[gem['imageNum']], r)
 
-
 def pullDownAllGems(board):
     # pulls down gems on the board to the bottom to fill in any gaps
     for x in range(BOARDWIDTH):
@@ -851,13 +833,11 @@ def pullDownAllGems(board):
                 gemsInColumn.append(board[x][y])
         board[x] = ([EMPTY_SPACE] * (BOARDHEIGHT - len(gemsInColumn))) + gemsInColumn
 
-
 def getGemAt(board, x, y):
     if x < 0 or y < 0 or x >= BOARDWIDTH or y >= BOARDHEIGHT:
         return None
     else:
         return board[x][y]
-
 
 def getDropSlots(board, simulation=True, random_fall=False, is_first=False):
     # Creates a "drop slot" for each column and fills the slot with a
@@ -894,7 +874,6 @@ def getDropSlots(board, simulation=True, random_fall=False, is_first=False):
                 dropSlots[x].append(newGem)
     return dropSlots
 
-
 def findMatchingGems(board):
     gemsToRemove = set() # a list of lists of gems in matching triplets that
     # should be removed
@@ -924,10 +903,8 @@ def findMatchingGems(board):
 
     return gemsToRemove
 
-
 def highlightSpace(x, y):
     pygame.draw.rect(DISPLAYSURF, HIGHLIGHTCOLOR, BOARDRECTS[x][y], 4)
-
 
 def getDroppingGems(board):
     # Find all the gems that have an empty space below them
@@ -940,7 +917,6 @@ def getDroppingGems(board):
                 droppingGems.append( {'imageNum': boardCopy[x][y], 'x': x, 'y': y, 'direction': DOWN} )
                 boardCopy[x][y] = EMPTY_SPACE
     return droppingGems
-
 
 def animateMovingGems(board, gems, pointsText, score, moves):
     # pointsText is a dictionary with keys 'x', 'y', and 'points'
@@ -962,7 +938,6 @@ def animateMovingGems(board, gems, pointsText, score, moves):
         FPSCLOCK.tick(FPS)
         progress += MOVERATE # progress the animation a little bit more for the next frame
 
-
 def moveGems(board, movingGems):
     # movingGems is a list of dicts with keys x, y, direction, imageNum
     for gem in movingGems:
@@ -982,7 +957,6 @@ def moveGems(board, movingGems):
         else:
             # gem is located above the board (where new gems come from)
             board[gem['x']][0] = gem['imageNum'] # move to top row
-
 
 def fillBoardAndAnimate(board, points, score, moves, simulation=True, random_fall=False, is_first=False):
 
@@ -1014,7 +988,6 @@ def fillBoardAndAnimate(board, points, score, moves, simulation=True, random_fal
             board[x][0] = dropSlots[x][0]
             del dropSlots[x][0]
 
-
 def checkForGemClick(pos):
     # See if the mouse click was on the board
     for x in range(BOARDWIDTH):
@@ -1023,7 +996,6 @@ def checkForGemClick(pos):
                 return {'x': x, 'y': y}
     return None # Click was not on the board.
 
-
 def drawBoard(board):
     for x in range(BOARDWIDTH):
         for y in range(BOARDHEIGHT):
@@ -1031,7 +1003,6 @@ def drawBoard(board):
             gemToDraw = board[x][y]
             if gemToDraw != EMPTY_SPACE:
                 DISPLAYSURF.blit(GEMIMAGES[gemToDraw], BOARDRECTS[x][y])
-
 
 def getBoardCopyMinusGems(board, gems):
     # Creates and returns a copy of the passed board data structure,
