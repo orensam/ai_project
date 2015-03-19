@@ -607,7 +607,7 @@ def runGame(is_manual=False, game_solver=None, no_graphics=False):
 
             if new_score is not None:
                 total_moves += 1
-                score += new_score
+                score = new_score
 
             firstSelectedGem = None
 
@@ -1076,35 +1076,32 @@ if __name__ == '__main__':
                       action="store_true", dest="IS_MANUAL", default=False,
                       help="Run game with manual control")
     parser.add_option("-s", "--size",
-                      type="int", dest="BOARD_SIZE", default=8,
-                      help="Size of game board")
+                      type="int", dest="BOARD_SIZE", default=6,
+                      help="Size of game board side (4..8)")
     parser.add_option("-g", "--gems",
                       type="int", dest="GEM_NUM", default=4,
-                      help="Number of gem types")
-    parser.add_option("-r", "--random-fall",
-                      action="store_true", dest="RANDOM_FALL", default=False,
-                      help="Simulate cascade with using simulation of random gems falling from top")
+                      help="Number of gem types (4..7)")
     parser.add_option("-c", "--score",
                       type="int", dest="GOAL", default=100,
-                      help="Goal score")
+                      help="Target (limit) score")
     parser.add_option("-f", "--fps",
                       type="int", dest="USER_FPS", default=30,
                       help="Game animation FPS")
     parser.add_option("-n", "--ngames",
                       type="int", dest="NGAMES", default=0,
-                      help="Number of games to run")
+                      help="Number of games to run. Set to 0 to run forever")
     parser.add_option("-O", "--output",
                       type="string", dest="LOGFILE", default="gemgem_log.csv",
                       help="Log file name")
     parser.add_option("-q", "--no-graphics",
                       action="store_true", dest="NO_GRAPHICS", default=False,
-                      help="Run game without graphics")
+                      help="Run game(s) without graphics")
     parser.add_option("-a", "--algorithm",
                       type="int", dest="ALGO", default=1,
-                      help="Algorithm: 1=Stupid Greedy, 2=Smart Greedy, 3=LBFS")
+                      help="Algorithm: 1=SGS, 2=HGS, 3=L-BFS")
     parser.add_option("-w", "--weights",
                       type="string", dest="WEIGHTS", default="1 1 1 1 1",
-                      help="Weights: Score, Pairs, Moves, Depth, Touching")
+                      help="Weights: [Score, Pairs, Moves, Depth, Touching]")
 
     (options, args) = parser.parse_args()
 
@@ -1112,6 +1109,47 @@ if __name__ == '__main__':
     NUMGEMIMAGES = options.GEM_NUM
     GOAL_SCORE = options.GOAL
     FPS = options.USER_FPS
-    weights = [float(x) for x in options.WEIGHTS.split()]
 
-    main(options.IS_MANUAL, options.RANDOM_FALL, options.NGAMES, ALGOS[options.ALGO], weights, options.NO_GRAPHICS, options.LOGFILE)
+    if BOARDWIDTH < 4 or BOARDWIDTH > 8:
+        print "Board size must be in the range 4..8"
+        parser.print_help()
+        sys.exit(1)
+
+    if NUMGEMIMAGES < 4 or NUMGEMIMAGES > 7:
+        print "Number of gem types must be in the range 4..7"
+        parser.print_help()
+        sys.exit(1)
+
+    if GOAL_SCORE < 0:
+        print "Target score must be positive. Terminating"
+        parser.print_help()
+        sys.exit(1)
+
+    if FPS < 10:
+        print "FPS must be at least 10. Terminating"
+        parser.print_help()
+        sys.exit(1)
+
+    if options.NGAMES < 0:
+        print "Number of games must be non-negative. Terminating"
+        parser.print_help()
+        sys.exit(1)
+
+    if options.ALGO not in (1,2,3):
+        print "Algorithm must be 1 (SGS), 2 (HGS) or 3 (L-BFS). Terminating"
+        parser.print_help()
+        sys.exit(1)
+
+    try:
+        weights = [float(x) for x in options.WEIGHTS.split()]
+    except:
+        print "Weights must be numbers. Terminating"
+        parser.print_help()
+        sys.exit(1)
+
+    if len(weights) != 5:
+        print "Must input exactly 5 Weights. Terminating"
+        parser.print_help()
+        sys.exit(1)
+
+    main(options.IS_MANUAL, False, options.NGAMES, ALGOS[options.ALGO], weights, options.NO_GRAPHICS, options.LOGFILE)
