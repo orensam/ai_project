@@ -850,7 +850,7 @@ Figure 3: Game-over rate as a function of
 Approach and Methods
 \end_layout
 
-\begin_layout Subsubsection
+\begin_layout Subsection
 Why Search?
 \end_layout
 
@@ -898,14 +898,7 @@ board space
  learning the best swap to perform on a given board is not a trivial task.
 \end_layout
 
-\begin_layout Standard
-\begin_inset Formula $ $
-\end_inset
-
-
-\end_layout
-
-\begin_layout Subsubsection
+\begin_layout Subsection
 The Non-Determinism Question
 \end_layout
 
@@ -927,14 +920,7 @@ non-deterministic
  in our case, and we have to resort to our own variants of searching techniques.
 \end_layout
 
-\begin_layout Standard
-\begin_inset Formula $ $
-\end_inset
-
-
-\end_layout
-
-\begin_layout Subsubsection
+\begin_layout Subsection
 Problem Representation
 \end_layout
 
@@ -963,14 +949,7 @@ The starting point of the graph is the start board.
  
 \end_layout
 
-\begin_layout Standard
-\begin_inset Formula $ $
-\end_inset
-
-
-\end_layout
-
-\begin_layout Subsubsection
+\begin_layout Subsection
 Methods
 \end_layout
 
@@ -979,19 +958,14 @@ We implemented 3 algorithms and 5 heuristics (detailed below).
  The first algorithm is a non-heuristic “stupid” baseline algorithm; The
  other two decide which move to preform using a weighing of the different
  heuristics.
+ The average per-swap running times of these algorithms are presented in
+ Figure 5.
 \end_layout
 
-\begin_layout Standard
-\begin_inset Formula $ $
-\end_inset
-
-
-\end_layout
-
-\begin_layout Standard
+\begin_layout Subsubsection
 
 \series bold
-The Algorithms:
+The Algorithms
 \end_layout
 
 \begin_layout Itemize
@@ -1114,10 +1088,10 @@ leaves
 \end_layout
 
 \end_deeper
-\begin_layout Standard
+\begin_layout Subsubsection
 
 \series bold
-The Heuristics:
+The Heuristics
 \end_layout
 
 \begin_layout Itemize
@@ -1235,7 +1209,40 @@ Figure 4: Starting with the board on the top, we swap the red gem at
 
 \end_layout
 
-\begin_layout Subsubsection
+\begin_layout Standard
+\begin_inset Float figure
+placement H
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\align center
+\begin_inset Graphics
+	filename swap_times.png
+	scale 25
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\align center
+
+\shape italic
+\size small
+Figure 5: Average running time for a single swap choice (logarithmically
+ scaled), for each algorithm (for L-BFS - also with different uncertaintly
+ limits).
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsection
 Implementation Issues
 \end_layout
 
@@ -1287,9 +1294,13 @@ Reevaluation Timing (Sequence vs.
 
 \series bold
 Calibration of the Uncertainty Limit 
+\series default
+
 \begin_inset Formula $U$
 \end_inset
 
+
+\series bold
 : 
 \series default
 Intuitively, 
@@ -1309,7 +1320,7 @@ Intuitively,
 \end_inset
 
  too high might make the swap series too long for L-BFS to run in a reasonable
- time.
+ time (see Figure 5).
  We found that setting 
 \begin_inset Formula $U$
 \end_inset
@@ -1321,7 +1332,7 @@ Intuitively,
  gives a good balance of the different considerations.
 \end_layout
 
-\begin_layout Subsubsection
+\begin_layout Subsection
 Test Plan
 \end_layout
 
@@ -1461,7 +1472,7 @@ Results
 \end_layout
 
 \begin_layout Standard
-First we show in Figure 5 the basic results (i.e, the average number of swaps
+First we show in Figure 6 the basic results (i.e, the average number of swaps
  required to reach a score of 
 \begin_inset Formula $250$
 \end_inset
@@ -1488,6 +1499,7 @@ We can easily notice that the Score heuristic is the most prominent, and
 
 \begin_layout Standard
 \begin_inset Float figure
+placement H
 wide false
 sideways false
 status collapsed
@@ -1508,7 +1520,7 @@ status collapsed
 
 \shape italic
 \size small
-Figure 5: Average results for individual heuristics, with SGS and human
+Figure 6: Average results for individual heuristics, with SGS and human
  averages for comparison.
 \end_layout
 
@@ -1519,7 +1531,6 @@ Figure 5: Average results for individual heuristics, with SGS and human
 
 \begin_layout Standard
 \begin_inset Float figure
-placement H
 wide false
 sideways false
 status collapsed
@@ -1540,7 +1551,7 @@ status collapsed
 
 \shape italic
 \size small
-Figure 6: Average results for basic heuristic combinations, with SGS and
+Figure 7: Average results for basic heuristic combinations, with SGS and
  human averages for comparison.
  
 \end_layout
@@ -1567,16 +1578,16 @@ canonical
 \end_inset
 
 .
- The results for these tests are shown in Figure 6.
+ The results for these tests are shown in Figure 7.
 \end_layout
 
 \begin_layout Standard
 As we saw before, when including the Score heuristic (the top half of the
- graph in Figure 6), we get generally better results.
+ graph in Figure 7), we get generally better results.
  These results also hinted us that the Moves heuristic might be ineffective,
  and in fact worsens our results.
- This ineffectiveness can be seen in the graph presented in Figure 7.
- Indeed, as we can see in Figure 7, the Moves heuristic does not help us,
+ This ineffectiveness can be seen in the graph presented in Figure 8.
+ Indeed, as we can see in Figure 8, the Moves heuristic does not help us,
  at all, to lower the swap count.
  Therefore, in the weight calibration process, we decided to omit it in
  further testing.
@@ -1584,7 +1595,6 @@ As we saw before, when including the Score heuristic (the top half of the
 
 \begin_layout Standard
 \begin_inset Float figure
-placement H
 wide false
 sideways false
 status collapsed
@@ -1605,7 +1615,7 @@ status collapsed
 
 \shape italic
 \size small
-Figure 7: The average swap count when using the Score heuristic with each
+Figure 8: The average swap count when using the Score heuristic with each
  of the other four (left) and when using each of the four non-Score heuristics
  individually (right).
 \end_layout
@@ -1617,7 +1627,6 @@ Figure 7: The average swap count when using the Score heuristic with each
 
 \begin_layout Standard
 \begin_inset Float figure
-placement H
 wide false
 sideways false
 status collapsed
@@ -1638,7 +1647,7 @@ status collapsed
 
 \shape italic
 \size small
-Figure 8: The top 10 heuristics and their average swap count.
+Figure 9: The top 10 heuristics and their average swap count.
  SGS and human results are too far out to show (at 25.2 and 28.8, respectively)
 \end_layout
 
@@ -1654,7 +1663,7 @@ In the next and final step, we performed a weight calibration, in order
 \end_inset
 
  zeroed out).
- Figure 8 shows the top 10 heuristic combinations.
+ Figure 9 shows the top 10 heuristic combinations.
 \end_layout
 
 \begin_layout Standard
@@ -1763,7 +1772,7 @@ ns, such as the
 \end_layout
 
 \begin_layout Standard
-If we take a step back and observe the graph in Figure 5, we see an anomaly
+If we take a step back and observe the graph in Figure 6, we see an anomaly
  mentioned before, regarding the 
 \begin_inset Formula $ht$
 \end_inset
@@ -1804,7 +1813,7 @@ frame
 \end_layout
 
 \begin_layout Standard
-Revisiting Figure 7, we want to explain the anomaly of 
+Revisiting Figure 8, we want to explain the anomaly of 
 \begin_inset Formula $hn$
 \end_inset
 
