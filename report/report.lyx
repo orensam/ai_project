@@ -162,7 +162,7 @@ nt became a publicly traded company, valued at over $7 Billion.
  in the well-known Tetris (1985), goes through games like Yoshi's Cookie
  (1992) and Bejeweled (2001), and is still present today, as King Digital
  releases new levels for Candy Crush Saga on a weekly basis.
- Match-3 is family of single-player video games; The basic, common elements
+ Match-3 is a family of single-player video games; The basic, common elements
  are a game board (usually square or rectangular in shape) and bricks of
  different types, arranged in a matrix formation on the board.
  In some games, the bricks change their location independently as time passes;
@@ -295,6 +295,7 @@ Figure 1: A starting board is drawn at the top.
 \end_inset
 
  down.
+ The resulting (minimal) scores a written alongside the boards.
 \end_layout
 
 \end_inset
@@ -426,7 +427,7 @@ cluster
 \series bold
 Randomization of appearing gems: 
 \series default
-The appearing gems (that fill the empty spaces created by cleared sequences)
+The appearing gems (that fill the empty spaces, created by cleared sequences)
  are chosen uniformly at random.
  That is in disagreement with the original implementation of GemGem, which
  prevented from appearing gems to be identically-colored to their neighbors
@@ -461,7 +462,7 @@ free
 placement h
 wide false
 sideways false
-status collapsed
+status open
 
 \begin_layout Plain Layout
 \align center
@@ -492,6 +493,7 @@ Figure 2: A starting board is drawn at the top.
 \end_inset
 
  right.
+ The resulting (minimal) scores are written below the boards.
 \end_layout
 
 \end_inset
@@ -521,12 +523,13 @@ A cascade awards the player
 
  is the number of gems cleared during the cascade.
  For example, in Figure 1, the move presented in the right branch will yield
- a score of 
+ a score of at least 
 \begin_inset Formula $6$
 \end_inset
 
 .
- Similarly, the right branch in Figure 2 will yield a score of 
+ Similarly, the right branch in Figure 2 will yield a score of at least
+ 
 \begin_inset Formula $8$
 \end_inset
 
@@ -534,17 +537,13 @@ A cascade awards the player
 \end_layout
 
 \begin_layout Standard
-We emphasize that it's 
+We say 
 \shape italic
 at least
 \shape default
- 
-\begin_inset Formula $p$
-\end_inset
-
- points because of assumption 2 mentioned before - appearing gems are randomized
-, therefore they can make the cascade longer than one can predict, and clear
- more gems from the board.
+ because of assumption 2 mentioned before - appearing gems are randomized,
+ therefore they can create sequences with the gems already on the board
+ -making the cascade longer and clearing additional gems.
 \end_layout
 
 \begin_layout Subsection
@@ -557,7 +556,7 @@ Once the rules of the game are well-defined, we can take on the mission
 \end_layout
 
 \begin_layout Standard
-There are many natural problems that arise with the given set of rules.
+There are many natural problems that arise from the given set of rules.
  We've concluded that, from an AI point of view, there are 3 problems that
  would be interesting to tackle:
 \end_layout
@@ -682,7 +681,7 @@ This problem is very similar to our problem (P1), and we can perform a simple
 \begin_inset Formula $1$
 \end_inset
 
- move; if not, check whether it's achievable within 2 moves, and so one.
+ move; if not, check whether it's achievable within 2 moves, and so on.
  The first time we get a positive answer will give us the minimal number
  of moves needed to reach score 
 \begin_inset Formula $c$
@@ -799,9 +798,9 @@ In our tests, the board size
 \begin_inset Formula $\nicefrac{s}{g}=1.5$
 \end_inset
 
-) is a good compromise - there's a relatively small chance to reach dead-ends
- (game-over states), while the number of valid swaps is small enough that
- we can run thousands of games in a reasonable amount of time.
+) is a good compromise - there's a relatively small chance of reaching a
+ dead-end (game-over state), while the number of valid swaps is small enough
+ that we can run thousands of games in a reasonable amount of time.
 \end_layout
 
 \begin_layout Standard
@@ -859,8 +858,8 @@ Generally speaking, the problem at hand requires us, given a game board,
  to choose a minimal series of swaps which will beat a certain score.
  The natural approach to this kind of problem, which we indeed chose, is
  to use search techniques - where the state space is the set of all possible
- boards, and the transitions are valid swaps that form a transition from
- one state to another.
+ boards, and the transitions are valid swaps that transform one board to
+ another.
  Another somewhat natural approach is to use learning techniques - however,
  it is not as suitable, because of the huge size of the problems state space
  (
