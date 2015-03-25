@@ -1257,17 +1257,21 @@ Simulation of Appearing Gems:
  we had to decide how to approach the appearing gems.
  On the one hand, we can simulate them using the same distribution function
  used when actually generating the gems (see assumption 2) and take them
- into account when looking for swaps in a future board; On the other hand,
- we can view the cleared cells as empty, and opt to use only the gems that
- we know for certain will exist in that board.
- In favor of the first approach is the fact that it yields more future swap
- options, that are likely to be similar to the actual future boards; moreover,
- it would be possible to eliminate the use of the limited uncertainty factor.
- In favor of the second one is the fact that every predicted move will almost
- certainly be a valid future move - as opposed to the first approach, where
- we might predict moves in a board that will never actually exist.
+ into account when looking for swaps in a future board.
+ On the other hand, we can view the cleared cells as empty, and opt to use
+ only the gems that we know for certain will exist in that board.
+ In favor of the first approach is the fact that it tries to mimic the real
+ behavior of the game, so it might give a better prediction of the gems
+ on the board after several swaps.
+ However, a similar gem distribution does not gurantee a similar gem arrangement
+ - and the arrangement, which is unpredictable, has a crucial effect on
+ all of the heuristic values.
+ In favor of the second one is the fact that every predicted swap will almost
+ certainly be a valid future swap - as opposed to the first approach, where
+ we might predict swaps (and cascades) on gems that will never actually
+ exist.
  We ruled in favor of the second approach, as it avoids the exaggerated
- promotion high-scoring imaginary swaps that will not be valid in actual
+ promotion of high-scoring imaginary swaps that will not be valid in the
  future boards.
  Preliminary tests supported our intuition and gave worse results when simulatin
 g appearing gems; we saw that oftentimes the algorithm chooses a swap based
@@ -1283,7 +1287,8 @@ Reevaluation Timing (Sequence vs.
  As stated before, in each L-BFS step we predict paths from the current
  board until we reach a cutoff.
  Once choosing the best leaf node, we are faced with two options: either
- perform the entire sequence of swaps, or only perform the first one.
+ perform the entire sequence of swaps leading up to the leaf, or only perform
+ the first one.
  One main advantage of the sequence approach is running time - we only need
  to search through the board space once every few swaps, whereas in the
  single step approach we need to search after every swap.
@@ -1588,9 +1593,8 @@ As we saw before, when including the Score heuristic (the top half of the
  graph in Figure 7), we get generally better results.
  These results also hinted us that the Moves heuristic might be ineffective,
  and in fact worsens our results.
- This ineffectiveness can be seen in the graph presented in Figure 8.
- Indeed, as we can see in Figure 8, the Moves heuristic does not help us,
- at all, to lower the swap count.
+ This ineffectiveness can be seen in the graph presented in Figure 8 - indeed,
+ the Moves heuristic does not help us, at all, to lower the swap count.
  Therefore, in the weight calibration process, we decided to omit it in
  further testing.
 \end_layout
@@ -1839,10 +1843,14 @@ paradox of choice
 \end_inset
 
  value actually causes the algorithms to chose lower-scoring moves.
- Second, the amount of moves isn't in coordination with their quality; for
- example one could easily image a board with 2 possible moves in which the
- first yields a board with k>1 3-point moves and the second yields a board
- with one 15-points move - choosing the first move isn't better.
+ Second, the amount of moves isn't necessarily in correlation with their
+ quality; for example one could easily imagine a board with 2 valid swaps,
+ where one swap yields a board with 
+\begin_inset Formula $k>1$
+\end_inset
+
+ 3-point valid swaps, and the other swap yields a board with one 15-point
+ swap - choosing the first one isn't better.
 \end_layout
 
 \begin_layout Section
@@ -1858,7 +1866,7 @@ Observing the outcomes of out tests, we were glad to see that a computer
  better, and sometimes for the worse.
  We saw that, unsurprisingly, when trying to maximize the score of a swap,
  using a score-based heuristic yields the best results.
- However, other heuristic value, associated with the placement of a swap
+ However, other heuristic values, associated with the placement of a swap
  on the board and the characteristics of the board resulting from the swap,
  can have a positive effect on the result, especially when performing a
  one-step prediction.
@@ -1867,21 +1875,21 @@ Observing the outcomes of out tests, we were glad to see that a computer
 \begin_layout Standard
 As for further research, there's a lot that is left to uncover.
  First, regarding the problem settings - we chose a specific board size
- and number of gem types.
- Even though changing these values keeps the main idea of the problem the
- same, it might be the case that our algorithms and heuristics will produce
- very different results.
+ and number of gem types; even though changing these values keeps the main
+ idea of the problem the same, it might be the case that our algorithms
+ and heuristics will produce very different results when testing them with
+ different settings.
  Our code easily supports this kind of modification, and one could easily
  take it from here.
 \end_layout
 
 \begin_layout Standard
-Second.
- regarding the problem definition - as shown before, there are many problems
- that can be defined using the basic Match-3 rules.
- We chose to minimize swaps to achieve a score, and the dual problem of
- maximizing the score within a swap limit is probably similar, since both
- problems aim to maximize the score-per-swap ratio.
+Second, regarding the problem definition - as shown before, there are many
+ problems that can be defined using the basic Match-3 rules.
+ We chose to minimize the number of swaps to achieve a certain score, and
+ the dual problem of maximizing the score within a limited number of swaps
+ is probably similar, since solution for both these problems aim to maximize
+ the score-per-swap ratio.
  The third problem we described, however, is substantially different - maximize
  the number of swaps without reaching game-over.
  In this problem the score doesn't really count, so the methods we could
@@ -1896,7 +1904,7 @@ Second.
 
 \begin_layout Standard
 Third, even the simplest Candy Crush levels offer more complex challenges
- than maximizing score - non-rectangular boards, popping specific gems,
+ than score maximization - non-rectangular boards, popping specific gems,
  special combo-candies which can pop the gems around them, and many others.
  Each of these challenges can be a research subject in itself.
 \end_layout

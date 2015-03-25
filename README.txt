@@ -12,6 +12,8 @@ This is a Match-3 game you can play in manual mode, or let the computer play (in
 The original game can be found here:
 http://pygame.org/project-Gemgem+(Bejeweled+clone)-1922-.html
 
+Prerequisites: Python 2.7 and pygame
+
 To run in the default settings, simply invoke:
 python gemgem.py
 This will run the game in its default settings -
