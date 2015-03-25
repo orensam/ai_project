@@ -543,7 +543,7 @@ at least
 \shape default
  because of assumption 2 mentioned before - appearing gems are randomized,
  therefore they can create sequences with the gems already on the board
- -making the cascade longer and clearing additional gems.
+ - making the cascade longer and clearing additional gems.
 \end_layout
 
 \begin_layout Subsection
@@ -1235,7 +1235,7 @@ status open
 \shape italic
 \size small
 Figure 5: Average running time for a single swap choice (logarithmically
- scaled), for each algorithm (for L-BFS - also with different uncertaintly
+ scaled), for each algorithm (for L-BFS - also with different uncertainty
  limits).
 \end_layout
 
@@ -1263,8 +1263,8 @@ Simulation of Appearing Gems:
  In favor of the first approach is the fact that it tries to mimic the real
  behavior of the game, so it might give a better prediction of the gems
  on the board after several swaps.
- However, a similar gem distribution does not gurantee a similar gem arrangement
- - and the arrangement, which is unpredictable, has a crucial effect on
+ However, a similar gem distribution does not guarantee a similar gem arrangemen
+t - and the arrangement, which is unpredictable, has a crucial effect on
  all of the heuristic values.
  In favor of the second one is the fact that every predicted swap will almost
  certainly be a valid future swap - as opposed to the first approach, where
