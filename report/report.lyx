@@ -1888,7 +1888,7 @@ Second, regarding the problem definition - as shown before, there are many
  problems that can be defined using the basic Match-3 rules.
  We chose to minimize the number of swaps to achieve a certain score, and
  the dual problem of maximizing the score within a limited number of swaps
- is probably similar, since solution for both these problems aim to maximize
+ is probably similar, since solutions for both these problems aim to maximize
  the score-per-swap ratio.
  The third problem we described, however, is substantially different - maximize
  the number of swaps without reaching game-over.
